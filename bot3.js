@@ -13,13 +13,16 @@ const auth = new google.auth.GoogleAuth({
 });
 
 const calendar = google.calendar({ version: "v3", auth });
-const calendarId = "TU_CALENDAR_ID";
+const calendarId = "0db2b3851de0802b3c7d7fe3a970808e67ddf6ad013d0fd6dc3924353fc726cd@group.calendar.google.com";
 
 async function getNextAvailableSlot() {
     const now = new Date();
+    now.setDate(now.getDate() + 1); // Comenzar desde mañana
+    now.setHours(9, 0, 0, 0); // Hora de inicio de jornada
+    
     const endOfWeek = new Date();
-    endOfWeek.setDate(now.getDate() + 7);
-
+    endOfWeek.setDate(now.getDate() + 6); // Buscar en la próxima semana
+    
     const response = await calendar.events.list({
         calendarId,
         timeMin: now.toISOString(),
@@ -27,15 +30,21 @@ async function getNextAvailableSlot() {
         singleEvents: true,
         orderBy: "startTime",
     });
-
+    
     const events = response.data.items;
     let availableSlot = null;
     let startHour = 9;
     let endHour = 18;
-
+    
     for (let day = 0; day < 7; day++) {
-        let checkDate = new Date();
+        let checkDate = new Date(now);
         checkDate.setDate(now.getDate() + day);
+        
+        // Verificar si el día es sábado (6) o domingo (0)
+        if (checkDate.getDay() === 6 || checkDate.getDay() === 0) {
+            continue; // Saltar sábados y domingos
+        }
+        
         checkDate.setHours(startHour, 0, 0, 0);
 
         while (checkDate.getHours() < endHour) {
@@ -44,7 +53,7 @@ async function getNextAvailableSlot() {
                 const eventEnd = new Date(event.end.dateTime);
                 return checkDate >= eventStart && checkDate < eventEnd;
             });
-
+            
             if (!conflict) {
                 availableSlot = new Date(checkDate);
                 break;
@@ -71,7 +80,7 @@ async function createCalendarEvent(msg, email, companyName, date) {
                 dateTime: new Date(date.getTime() + 3600000).toISOString(),
                 timeZone: "America/Mexico_City",
             },
-            attendees: [{ email }],
+            //attendees: [{ email }],
         };
 
         const response = await calendar.events.insert({
@@ -99,6 +108,71 @@ client.on("message", async (msg) => {
                 msg.reply("❌ No hay disponibilidad en la próxima semana.");
             }
         }
+
+        else if(text === "hola"){
+            const response = `¿En qué podemos ayudarte? Solo necesitas seleccionar una de las opciones que aparecen a continuación.\n\n
+            1️⃣ *Eventos*\n
+            2️⃣ *Cursos*\n
+            3️⃣ *Recorridos*\n`;
+
+            setTimeout(() => {
+                msg.reply(response);
+            }, 3000);
+
+        }
+
+        else if (text === "eventos") {
+            const eventResponse = `📅 *EVENTOS*\n\n
+            a) *[Quiero hacer un evento en BLOQUE](https://link-a-solicitud-evento.com)*\n
+               - *[Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)*\n
+               - *[Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)*\n`;
+
+            setTimeout(() => {
+                msg.reply(eventResponse);
+            }, 3000);
+        }
+
+        else if (text === "cursos") {
+            const courseResponse = `📚 *CURSOS*\n\n
+            🔹 *[Ver todos los cursos disponibles](https://bloqueqro.mx)*\n
+            🔹 *[Inscribirme en un curso](https://bloqueqro.mx/cursos/)*\n `;
+
+            setTimeout(() => {
+                msg.reply(courseResponse);
+            }, 3000);
+        }
+
+        else if (text === "recorridos") {
+            const tourResponse = `🚶‍♂️ *RECORRIDOS*\n\n
+            📍 *[Agenda un recorrido por BLOQUE](https://link-a-agendar-recorrido.com)* o escribe "agendar recorrido"\n
+            🏛 *[Ver el recorrido virtual](https://link-a-recorrido-virtual.com)*\n
+            ❓ *[Más información sobre los recorridos](https://link-a-info-recorridos.com)*\n`;
+
+            setTimeout(() => {
+                msg.reply(tourResponse);
+            }, 3000);
+        }
+        else if (text === "hablar con un asesor") {
+            const advisorResponse = `👨‍💻 *Hablar con un asesor:*\n\n
+            En este momento nos encontramos fuera del horario de atención.\n
+            Los horarios de servicio en BLOQUE Centro de Innovación y Tecnología Creativa son los siguientes:\n
+            🕒 *Horario de oficina:* 9:00 Hrs - 15:00 Hrs.\n\n
+            Recuerda que puedes visitar nuestra página donde encontrarás todos los cursos, eventos y actividades que BLOQUE ofrece para ti.\n
+            🌐 [Visitar plataforma](https://link-a-la-plataforma.com)`;
+
+            setTimeout(() => {
+                msg.reply(advisorResponse);
+            }, 3000);
+        }
+
+        /*else {
+            const defaultResponse = `🤖 No entiendo ese mensaje. Escribe *HOLA* para empezar o selecciona una opción válida.`;
+            setTimeout(() => {
+                msg.reply(defaultResponse);
+            }, 3000);
+        }*/
+
+
 
         const confirmMatch = text.match(/^confirmar (\S+) (.+)$/);
         if (confirmMatch) {
