@@ -144,9 +144,7 @@ client.on("message", async (msg) => {
 
         else if (text === "recorridos") {
             const tourResponse = `🚶‍♂️ *RECORRIDOS*\n\n
-            📍 *[Agenda un recorrido por BLOQUE](https://link-a-agendar-recorrido.com)* o escribe "agendar recorrido"\n
-            🏛 *[Ver el recorrido virtual](https://link-a-recorrido-virtual.com)*\n
-            ❓ *[Más información sobre los recorridos](https://link-a-info-recorridos.com)*\n`;
+            📍 *[Agenda un recorrido por BLOQUE] escribe "agendar recorrido"\n`;
 
             setTimeout(() => {
                 msg.reply(tourResponse);
