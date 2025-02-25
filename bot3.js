@@ -69,9 +69,9 @@ async function getNextAvailableSlot() {
 async function createCalendarEvent(msg, email, companyName, date) {
     try {
         const event = {
-            summary: `Recorrido - ${companyName}`,
+            summary: `Pregira - ${companyName}`,
             location: "BLOQUE Centro de Innovación",
-            description: "Recorrido guiado por las instalaciones de BLOQUE.",
+            description: "Pregira guiada por las instalaciones de BLOQUE.",
             start: {
                 dateTime: date.toISOString(),
                 timeZone: "America/Mexico_City",
@@ -88,7 +88,7 @@ async function createCalendarEvent(msg, email, companyName, date) {
             resource: event,
         });
 
-        msg.reply(`✅ Tu recorrido ha sido agendado el ${date.toLocaleString()} \n📅 Link del evento: ${response.data.htmlLink}`);
+        msg.reply(`✅ Tu pregira ha sido agendado el ${date.toLocaleString()} \n📅 Link del evento: ${response.data.htmlLink}`);
     } catch (error) {
         console.error("Error creando evento:", error);
         msg.reply("❌ Ocurrió un error al agendar tu recorrido. Intenta de nuevo.");
@@ -99,7 +99,7 @@ client.on("message", async (msg) => {
     if (!msg.isGroup) {
         const text = msg.body.toLowerCase().trim();
         
-        if (text === "agendar recorrido") {
+        if (text === "agendar pregira") {
             msg.reply("🔍 Buscando disponibilidad...");
             const availableSlot = await getNextAvailableSlot();
             if (availableSlot) {
@@ -113,7 +113,7 @@ client.on("message", async (msg) => {
             const response = `¿En qué podemos ayudarte? Solo necesitas seleccionar una de las opciones que aparecen a continuación.\n\n
             1️⃣ *Eventos*\n
             2️⃣ *Cursos*\n
-            3️⃣ *Recorridos*\n`;
+            3️⃣ *Pregiras*\n`;
 
             setTimeout(() => {
                 msg.reply(response);
@@ -123,7 +123,7 @@ client.on("message", async (msg) => {
 
         else if (text === "eventos") {
             const eventResponse = `📅 *EVENTOS*\n\n
-            a) *[Quiero hacer un evento en BLOQUE](https://link-a-solicitud-evento.com)*\n
+            a) *[Quiero hacer un evento en BLOQUE](https://bloqueqro.mx/cotizacion/)*\n
                - *[Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)*\n
                - *[Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)*\n`;
 
@@ -142,17 +142,15 @@ client.on("message", async (msg) => {
             }, 3000);
         }
 
-        else if (text === "recorridos") {
-            const tourResponse = `🚶‍♂️ *RECORRIDOS*\n\n
-            📍 *[Agenda un recorrido por BLOQUE](https://link-a-agendar-recorrido.com)* o escribe "agendar recorrido"\n
-            🏛 *[Ver el recorrido virtual](https://link-a-recorrido-virtual.com)*\n
-            ❓ *[Más información sobre los recorridos](https://link-a-info-recorridos.com)*\n`;
+        else if (text === "pregiras") {
+            const tourResponse = `🚶‍♂️ *PREGIRAS*\n\n
+            📍 *[Agenda una pregira por BLOQUE] escribe "agendar pregira"\n`;
 
             setTimeout(() => {
                 msg.reply(tourResponse);
             }, 3000);
         }
-        else if (text === "hablar con un asesor") {
+        /*else if (text === "hablar con un asesor") {
             const advisorResponse = `👨‍💻 *Hablar con un asesor:*\n\n
             En este momento nos encontramos fuera del horario de atención.\n
             Los horarios de servicio en BLOQUE Centro de Innovación y Tecnología Creativa son los siguientes:\n
@@ -163,6 +161,18 @@ client.on("message", async (msg) => {
             setTimeout(() => {
                 msg.reply(advisorResponse);
             }, 3000);
+        }*/
+
+        else if(text === "transporte"){
+            const response = `¿En qué podemos ayudarte? Solo necesitas seleccionar una de las opciones que aparecen a continuación.\n\n
+            1️⃣ *Eventos*\n
+            2️⃣ *Cursos*\n
+            3️⃣ *Recorridos*\n`;
+
+            setTimeout(() => {
+                msg.reply(response);
+            }, 3000);
+
         }
 
         /*else {
