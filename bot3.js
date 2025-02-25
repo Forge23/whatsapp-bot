@@ -69,9 +69,9 @@ async function getNextAvailableSlot() {
 async function createCalendarEvent(msg, email, companyName, date) {
     try {
         const event = {
-            summary: `Recorrido - ${companyName}`,
+            summary: `Pregira - ${companyName}`,
             location: "BLOQUE Centro de Innovación",
-            description: "Recorrido guiado por las instalaciones de BLOQUE.",
+            description: "Pregira guiada por las instalaciones de BLOQUE.",
             start: {
                 dateTime: date.toISOString(),
                 timeZone: "America/Mexico_City",
@@ -88,7 +88,7 @@ async function createCalendarEvent(msg, email, companyName, date) {
             resource: event,
         });
 
-        msg.reply(`✅ Tu recorrido ha sido agendado el ${date.toLocaleString()} \n📅 Link del evento: ${response.data.htmlLink}`);
+        msg.reply(`✅ Tu pregira ha sido agendado el ${date.toLocaleString()} \n📅 Link del evento: ${response.data.htmlLink}`);
     } catch (error) {
         console.error("Error creando evento:", error);
         msg.reply("❌ Ocurrió un error al agendar tu recorrido. Intenta de nuevo.");
@@ -99,7 +99,7 @@ client.on("message", async (msg) => {
     if (!msg.isGroup) {
         const text = msg.body.toLowerCase().trim();
         
-        if (text === "agendar recorrido") {
+        if (text === "agendar pregira") {
             msg.reply("🔍 Buscando disponibilidad...");
             const availableSlot = await getNextAvailableSlot();
             if (availableSlot) {
@@ -143,14 +143,14 @@ client.on("message", async (msg) => {
         }
 
         else if (text === "pregiras") {
-            const tourResponse = `🚶‍♂️ *RECORRIDOS*\n\n
-            📍 *[Agenda un recorrido por BLOQUE] escribe "agendar recorrido"\n`;
+            const tourResponse = `🚶‍♂️ *PREGIRAS*\n\n
+            📍 *[Agenda una pregira por BLOQUE] escribe "agendar pregira"\n`;
 
             setTimeout(() => {
                 msg.reply(tourResponse);
             }, 3000);
         }
-        else if (text === "hablar con un asesor") {
+        /*else if (text === "hablar con un asesor") {
             const advisorResponse = `👨‍💻 *Hablar con un asesor:*\n\n
             En este momento nos encontramos fuera del horario de atención.\n
             Los horarios de servicio en BLOQUE Centro de Innovación y Tecnología Creativa son los siguientes:\n
@@ -161,7 +161,7 @@ client.on("message", async (msg) => {
             setTimeout(() => {
                 msg.reply(advisorResponse);
             }, 3000);
-        }
+        }*/
 
         else if(text === "transporte"){
             const response = `¿En qué podemos ayudarte? Solo necesitas seleccionar una de las opciones que aparecen a continuación.\n\n
