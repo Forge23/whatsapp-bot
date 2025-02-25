@@ -123,7 +123,7 @@ client.on("message", async (msg) => {
 
         else if (text === "eventos") {
             const eventResponse = `📅 *EVENTOS*\n\n
-            a) *[Quiero hacer un evento en BLOQUE](https://link-a-solicitud-evento.com)*\n
+            a) *[Quiero hacer un evento en BLOQUE](https://bloqueqro.mx/cotizacion/)*\n
                - *[Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)*\n
                - *[Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)*\n`;
 
