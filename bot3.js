@@ -113,7 +113,7 @@ client.on("message", async (msg) => {
             const response = `¿En qué podemos ayudarte? Solo necesitas seleccionar una de las opciones que aparecen a continuación.\n\n
             1️⃣ *Eventos*\n
             2️⃣ *Cursos*\n
-            3️⃣ *Recorridos*\n`;
+            3️⃣ *Pregiras*\n`;
 
             setTimeout(() => {
                 msg.reply(response);
@@ -142,7 +142,7 @@ client.on("message", async (msg) => {
             }, 3000);
         }
 
-        else if (text === "recorridos") {
+        else if (text === "pregiras") {
             const tourResponse = `🚶‍♂️ *RECORRIDOS*\n\n
             📍 *[Agenda un recorrido por BLOQUE] escribe "agendar recorrido"\n`;
 
@@ -161,6 +161,18 @@ client.on("message", async (msg) => {
             setTimeout(() => {
                 msg.reply(advisorResponse);
             }, 3000);
+        }
+
+        else if(text === "transporte"){
+            const response = `¿En qué podemos ayudarte? Solo necesitas seleccionar una de las opciones que aparecen a continuación.\n\n
+            1️⃣ *Eventos*\n
+            2️⃣ *Cursos*\n
+            3️⃣ *Recorridos*\n`;
+
+            setTimeout(() => {
+                msg.reply(response);
+            }, 3000);
+
         }
 
         /*else {
