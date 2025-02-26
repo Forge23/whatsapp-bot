@@ -110,10 +110,13 @@ client.on("message", async (msg) => {
         }
 
         else if(text === "hola"){
-            const response = `¿En qué podemos ayudarte? Solo necesitas seleccionar una de las opciones que aparecen a continuación.\n\n
-            1️⃣ *Eventos*\n
-            2️⃣ *Cursos*\n
-            3️⃣ *Pregiras*\n`;
+            const response = `Hola, bienvenido al chat de información de bloque, se parte de nuestra comunidad al registrarte en (https://bloqueqro.mx/registro) .\n\n
+            1️⃣ *[Quiero hacer un evento en BLOQUE](https://bloqueqro.mx/cotizacion/)*\n
+            2️⃣ *[Conoce bloque](https://bloqueqro.mx)*\n
+            3️⃣ *[Agenda una pregira por BLOQUE]\n
+            4️⃣ *[Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)*\n
+            5️⃣ *[Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)*\n
+            6️⃣ *[Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)*`;
 
             setTimeout(() => {
                 msg.reply(response);
@@ -163,11 +166,10 @@ client.on("message", async (msg) => {
             }, 3000);
         }*/
 
-        else if(text === "transporte"){
-            const response = `¿En qué podemos ayudarte? Solo necesitas seleccionar una de las opciones que aparecen a continuación.\n\n
-            1️⃣ *Eventos*\n
-            2️⃣ *Cursos*\n
-            3️⃣ *Recorridos*\n`;
+        else if(text === "5"){
+            const response = `Conoce nuestros espacios.\n\n
+            - *[Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)*\n
+            `;
 
             setTimeout(() => {
                 msg.reply(response);
