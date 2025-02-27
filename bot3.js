@@ -99,7 +99,7 @@ client.on("message", async (msg) => {
     if (!msg.isGroup) {
         const text = msg.body.toLowerCase().trim();
         
-        if (text === "agendar pregira") {
+        if (text === "3") {
             msg.reply("🔍 Buscando disponibilidad...");
             const availableSlot = await getNextAvailableSlot();
             if (availableSlot) {
@@ -110,7 +110,7 @@ client.on("message", async (msg) => {
         }
 
         else if(text === "hola"){
-            const response = `Hola, bienvenido al chat de información de bloque, se parte de nuestra comunidad al registrarte en (https://bloqueqro.mx/registro) .\n\n
+            const response = `Hola, bienvenido al chat de información de bloque, se parte de nuestra comunidad al registrarte en (https://bloqueqro.mx/crear-cuenta/) .\n\n
             1️⃣ *[Quiero hacer un evento en BLOQUE](https://bloqueqro.mx/cotizacion/)*\n
             2️⃣ *[Conoce bloque](https://bloqueqro.mx)*\n
             3️⃣ *[Agenda una pregira por BLOQUE]\n
@@ -177,12 +177,12 @@ client.on("message", async (msg) => {
 
         }
 
-        /*else {
+        else {
             const defaultResponse = `🤖 No entiendo ese mensaje. Escribe *HOLA* para empezar o selecciona una opción válida.`;
             setTimeout(() => {
                 msg.reply(defaultResponse);
             }, 3000);
-        }*/
+        }
 
 
 
