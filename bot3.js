@@ -97,18 +97,33 @@ client.on("message", async (msg) => {
     if (!msg.isGroup) {
         const text = msg.body.toLowerCase().trim();
 
-        if (text === "agendar pregira") {
+        const confirmMatch = text.match(/^confirmar (\S+) (.+)$/);
+        if (confirmMatch) {
+            const email = confirmMatch[1];
+            const companyName = confirmMatch[2];
+
+            if (!pendingAppointments[msg.from]) {
+                msg.reply("⚠️ No tienes una cita pendiente. Escribe *agendar pregira* para iniciar.");
+                return;
+            }
+
+            const confirmedSlot = pendingAppointments[msg.from];
+            createCalendarEvent(msg, email, companyName, confirmedSlot);
+            return; // Ensure no further processing
+        }
+
+        if (text === "3") {
             msg.reply("🔍 Buscando disponibilidad...");
             const availableSlot = await getNextAvailableSlot();
             if (availableSlot) {
                 pendingAppointments[msg.from] = availableSlot;
-                msg.reply(`📆 La próxima disponibilidad es el ${availableSlot.toLocaleString()}.\nResponde con:\n\n✅ *Confirmar [correo] [nombre de empresa]*\n❌ *Siguiente* para intentar con otro horario`);
+                msg.reply(`📆 La próxima disponibilidad es el ${availableSlot.toLocaleString()}.\nResponde con:\n\n✅ *Confirmar [correo] [nombre de empresa]*\n❌ *n* para intentar con otro horario`);
             } else {
                 msg.reply("❌ No hay disponibilidad en la próxima semana.");
             }
         } 
         
-        else if (text === "siguiente") {
+        else if (text === "n") {
             if (!pendingAppointments[msg.from]) {
                 msg.reply("⚠️ No tienes una cita pendiente. Escribe *agendar pregira* para iniciar.");
                 return;
@@ -149,16 +164,18 @@ client.on("message", async (msg) => {
 
             if (foundSlot) {
                 pendingAppointments[msg.from] = foundSlot;
-                msg.reply(`📆 La siguiente disponibilidad es el ${foundSlot.toLocaleString()}.\nResponde con:\n\n✅ *Confirmar [correo] [nombre de empresa]*\n❌ *Siguiente* para probar otra opción`);
+                msg.reply(`📆 La siguiente disponibilidad es el ${foundSlot.toLocaleString()}.\nResponde con:\n\n✅ *Confirmar [correo] [nombre de empresa]*\n❌ *n* para probar otra opción`);
             } else {
                 msg.reply("❌ No hay más horarios disponibles en este día.");
             }
+            
         }
         else if(text === "hola"){
+            console.log(text);
             const response = `Hola, bienvenido al chat de información de bloque, se parte de nuestra comunidad al registrarte en (https://bloqueqro.mx/crear-cuenta/) .\n\n
             1️⃣ *[Quiero hacer un evento en BLOQUE](https://bloqueqro.mx/cotizacion/)*\n
             2️⃣ *[Conoce bloque](https://bloqueqro.mx)*\n
-            3️⃣ *[Agenda una pregira por BLOQUE]\n
+            3️⃣ *[Agenda una pregira por BLOQUE]*\n
             4️⃣ *[Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)*\n
             5️⃣ *[Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)*\n
             6️⃣ *[Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)*`;
@@ -190,62 +207,13 @@ client.on("message", async (msg) => {
             }, 3000);
         }
 
-        else if (text === "pregiras") {
-            const tourResponse = `🚶‍♂️ *PREGIRAS*\n\n
-            📍 *[Agenda una pregira por BLOQUE] escribe "agendar pregira"\n`;
-
-            setTimeout(() => {
-                msg.reply(tourResponse);
-            }, 3000);
-        }
-        /*else if (text === "hablar con un asesor") {
-            const advisorResponse = `👨‍💻 *Hablar con un asesor:*\n\n
-            En este momento nos encontramos fuera del horario de atención.\n
-            Los horarios de servicio en BLOQUE Centro de Innovación y Tecnología Creativa son los siguientes:\n
-            🕒 *Horario de oficina:* 9:00 Hrs - 15:00 Hrs.\n\n
-            Recuerda que puedes visitar nuestra página donde encontrarás todos los cursos, eventos y actividades que BLOQUE ofrece para ti.\n
-            🌐 [Visitar plataforma](https://link-a-la-plataforma.com)`;
-
-            setTimeout(() => {
-                msg.reply(advisorResponse);
-            }, 3000);
-        }*/
-
-        else if(text === "transporte"){
-            const response = `¿En qué podemos ayudarte? Solo necesitas seleccionar una de las opciones que aparecen a continuación.\n\n
-            1️⃣ *Eventos*\n
-            2️⃣ *Cursos*\n
-            3️⃣ *Recorridos*\n`;
-
-            setTimeout(() => {
-                msg.reply(response);
-            }, 3000);
-
-        }
-
-        /*else {
+        else {
             const defaultResponse = `🤖 No entiendo ese mensaje. Escribe *HOLA* para empezar o selecciona una opción válida.`;
             setTimeout(() => {
                 msg.reply(defaultResponse);
             }, 3000);
-        }*/
-
-
-
-            const confirmMatch = text.match(/^confirmar (\S+) (.+)$/);
-            if (confirmMatch) {
-                const email = confirmMatch[1];
-                const companyName = confirmMatch[2];
-    
-                if (!pendingAppointments[msg.from]) {
-                    msg.reply("⚠️ No tienes una cita pendiente. Escribe *agendar pregira* para iniciar.");
-                    return;
-                }
-    
-                const confirmedSlot = pendingAppointments[msg.from];
-                createCalendarEvent(msg, email, companyName, confirmedSlot);
-            }
         }
+    }
 });
 
 client.initialize();
