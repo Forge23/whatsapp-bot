@@ -67,7 +67,7 @@ async function getNextAvailableSlot() {
 async function createCalendarEvent(msg, email, companyName, date) {
     try {
         const event = {
-            summary: `Pregira - ${companyName}`,
+            summary: `Pregira - ${companyName} - ${email}`,
             location: "BLOQUE Centro de Innovación",
             description: "Pregira guiada por las instalaciones de BLOQUE.",
             start: {
