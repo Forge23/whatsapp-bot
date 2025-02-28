@@ -223,7 +223,7 @@ client.on("message", async (msg) => {
             msg.reply("🔗 [Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)");
         }
         else if (text === "7") {
-            msg.reply("📞 *ATENCIÓN ESPECIALIZADA*\n\n📧 número: ext. 1005 y 1009");
+            msg.reply("📞 *ATENCIÓN ESPECIALIZADA*\n\n📧 número: 442 238 7700 ext. 1012");
             }
         else {
             const defaultResponse = `🤖 No entiendo ese mensaje. Escribe *HOLA* para empezar o selecciona una opción válida.`;
