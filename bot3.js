@@ -206,7 +206,21 @@ client.on("message", async (msg) => {
                 msg.reply(courseResponse);
             }, 3000);
         }
-
+        else if (text === "1") {
+            msg.reply("🔗 [Quiero hacer un evento en BLOQUE](https://bloqueqro.mx/cotizacion/)");
+        }
+        else if (text === "2") {
+            msg.reply("🔗 [Conoce bloque](https://bloqueqro.mx)");
+        }
+        else if (text === "4") {
+            msg.reply("🔗 [Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)");
+        }
+        else if (text === "5") {
+            msg.reply("🔗 [Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)");
+        }
+        else if (text === "6") {
+            msg.reply("🔗 [Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)");
+        }
         else {
             const defaultResponse = `🤖 No entiendo ese mensaje. Escribe *HOLA* para empezar o selecciona una opción válida.`;
             setTimeout(() => {
