@@ -41,11 +41,11 @@ async function getNextAvailableSlot() {
         let checkDate = new Date(now);
         checkDate.setDate(now.getDate() + day);
 
-        // Saltar sábados y domingos
-        if (checkDate.getDay() === 6 || checkDate.getDay() === 0) continue;
+        // Saltar jueves a domingo
+        if (checkDate.getDay() < 1 || checkDate.getDay() > 3) continue;
 
         checkDate.setHours(9, 0, 0, 0);
-        while (checkDate.getHours() < 16) { // Hasta las 4 PM
+        while (checkDate.getHours() < 12) { // Hasta las 12 PM
             const conflict = events.some(event => {
                 const eventStart = new Date(event.start.dateTime);
                 const eventEnd = new Date(event.end.dateTime);
@@ -132,7 +132,13 @@ client.on("message", async (msg) => {
             let nextSlot = new Date(pendingAppointments[msg.from]);
             nextSlot.setHours(nextSlot.getHours() + 1);
 
-            if (nextSlot.getHours() >= 16) {
+            if (nextSlot.getHours() >= 12) {
+                nextSlot.setDate(nextSlot.getDate() + 1);
+                nextSlot.setHours(9, 0, 0, 0);
+            }
+
+            // Saltar jueves a domingo
+            while (nextSlot.getDay() < 1 || nextSlot.getDay() > 3) {
                 nextSlot.setDate(nextSlot.getDate() + 1);
                 nextSlot.setHours(9, 0, 0, 0);
             }
@@ -140,7 +146,7 @@ client.on("message", async (msg) => {
             const response = await calendar.events.list({
                 calendarId,
                 timeMin: nextSlot.toISOString(),
-                timeMax: new Date(nextSlot.getTime() + 25200000).toISOString(), // Buscar en 7 horas
+                timeMax: new Date(nextSlot.getTime() + 10800000).toISOString(), // Buscar en 3 horas
                 singleEvents: true,
                 orderBy: "startTime",
             });
@@ -148,7 +154,7 @@ client.on("message", async (msg) => {
             const events = response.data.items;
             let foundSlot = null;
 
-            while (nextSlot.getHours() < 16) {
+            while (nextSlot.getHours() < 12) {
                 const conflict = events.some(event => {
                     const eventStart = new Date(event.start.dateTime);
                     const eventEnd = new Date(event.end.dateTime);
@@ -166,9 +172,48 @@ client.on("message", async (msg) => {
                 pendingAppointments[msg.from] = foundSlot;
                 msg.reply(`📆 La siguiente disponibilidad es el ${foundSlot.toLocaleString()}.\nResponde con:\n\n✅ *Confirmar [correo] [nombre de empresa]*\n❌ *n* para probar otra opción`);
             } else {
-                msg.reply("❌ No hay más horarios disponibles en este día.");
+                // Si no hay más horarios disponibles en el día, buscar en el siguiente día hábil
+                nextSlot.setDate(nextSlot.getDate() + 1);
+                nextSlot.setHours(9, 0, 0, 0);
+
+                // Saltar jueves a domingo
+                while (nextSlot.getDay() < 1 || nextSlot.getDay() > 3) {
+                    nextSlot.setDate(nextSlot.getDate() + 1);
+                    nextSlot.setHours(9, 0, 0, 0);
+                }
+
+                const nextDayResponse = await calendar.events.list({
+                    calendarId,
+                    timeMin: nextSlot.toISOString(),
+                    timeMax: new Date(nextSlot.getTime() + 10800000).toISOString(), // Buscar en 3 horas
+                    singleEvents: true,
+                    orderBy: "startTime",
+                });
+
+                const nextDayEvents = nextDayResponse.data.items;
+                let nextDayFoundSlot = null;
+
+                while (nextSlot.getHours() < 12) {
+                    const nextDayConflict = nextDayEvents.some(event => {
+                        const eventStart = new Date(event.start.dateTime);
+                        const eventEnd = new Date(event.end.dateTime);
+                        return nextSlot >= eventStart && nextSlot < eventEnd;
+                    });
+
+                    if (!nextDayConflict) {
+                        nextDayFoundSlot = new Date(nextSlot);
+                        break;
+                    }
+                    nextSlot.setHours(nextSlot.getHours() + 1);
+                }
+
+                if (nextDayFoundSlot) {
+                    pendingAppointments[msg.from] = nextDayFoundSlot;
+                    msg.reply(`📆 La siguiente disponibilidad es el ${nextDayFoundSlot.toLocaleString()}.\nResponde con:\n\n✅ *Confirmar [correo] [nombre de empresa]*\n❌ *n* para probar otra opción`);
+                } else {
+                    msg.reply("❌ No hay más horarios disponibles en los próximos días. Intenta de nuevo mañana.");
+                }
             }
-            
         }
         else if(text === "hola"){
             console.log(text);
@@ -178,8 +223,7 @@ client.on("message", async (msg) => {
             3️⃣ *[Agenda una pregira por BLOQUE]*\n
             4️⃣ *[Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)*\n
             5️⃣ *[Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)*\n
-            6️⃣ *[Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)*\n
-            7️⃣ *[Atención especializada]*`;
+            6️⃣ *[Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)*`;
 
             setTimeout(() => {
                 msg.reply(response);
@@ -222,9 +266,6 @@ client.on("message", async (msg) => {
         else if (text === "6") {
             msg.reply("🔗 [Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)");
         }
-        else if (text === "7") {
-            msg.reply("📞 *ATENCIÓN ESPECIALIZADA*\n\n📧 número: 442 238 7700 ext. 1012");
-            }
         else {
             const defaultResponse = `🤖 No entiendo ese mensaje. Escribe *HOLA* para empezar o selecciona una opción válida.`;
             setTimeout(() => {
