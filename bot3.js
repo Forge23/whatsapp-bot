@@ -85,7 +85,7 @@ async function createCalendarEvent(msg, email, companyName, date) {
             resource: event,
         });
 
-        msg.reply(`✅ Tu pregira ha sido agendada el ${date.toLocaleString()} \n📅 Link del evento: ${response.data.htmlLink}`);
+        msg.reply(`✅ Tu pregira ha sido agendada el ${date.toLocaleString()} \n📅 Link del evento: ${response.data.htmlLink} \n lugar: https://maps.app.goo.gl/JSNuNMdzvfxbQacNA`);
         delete pendingAppointments[msg.from]; // Eliminar la reserva temporal
     } catch (error) {
         console.error("Error creando evento:", error);
@@ -103,7 +103,7 @@ client.on("message", async (msg) => {
             const companyName = confirmMatch[2];
 
             if (!pendingAppointments[msg.from]) {
-                msg.reply("⚠️ No tienes una cita pendiente. Escribe *agendar pregira* para iniciar.");
+                msg.reply("⚠️ No tienes una cita pendiente. Escribe *3* para iniciar.");
                 return;
             }
 
@@ -125,7 +125,7 @@ client.on("message", async (msg) => {
         
         else if (text === "n") {
             if (!pendingAppointments[msg.from]) {
-                msg.reply("⚠️ No tienes una cita pendiente. Escribe *agendar pregira* para iniciar.");
+                msg.reply("⚠️ No tienes una cita pendiente. Escribe *3* para iniciar.");
                 return;
             }
 
