@@ -112,7 +112,7 @@ client.on("message", async (msg) => {
             return; // Ensure no further processing
         }
 
-        if (text === "3") {
+        if (text === "1") {
             msg.reply("🔍 Buscando disponibilidad...");
             const availableSlot = await getNextAvailableSlot();
             if (availableSlot) {
@@ -218,13 +218,12 @@ client.on("message", async (msg) => {
         else if(text === "hola"){
             console.log(text);
             const response = `Hola, bienvenido al chat de información de bloque, se parte de nuestra comunidad al registrarte en (https://bloqueqro.mx/crear-cuenta/) .\n\n
-            1️⃣ *[Quiero hacer un evento en BLOQUE](https://bloqueqro.mx/cotizacion/)*\n
+            1️⃣ *[Quiero hacer un evento en BLOQUE]*\n
             2️⃣ *[Conoce bloque](https://bloqueqro.mx)*\n
-            3️⃣ *[Agenda una pregira por BLOQUE]*\n
+            3️⃣ *Atención especializada*\n
             4️⃣ *[Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)*\n
             5️⃣ *[Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)*\n
-            6️⃣ *[Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)*\n
-            7️⃣ *Atención especializada*`;
+            6️⃣ *[Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)*\n`;
 
             setTimeout(() => {
                 msg.reply(response);
@@ -232,28 +231,8 @@ client.on("message", async (msg) => {
 
         }
 
-        else if (text === "eventos") {
-            const eventResponse = `📅 *EVENTOS*\n\n
-            a) *[Quiero hacer un evento en BLOQUE](https://bloqueqro.mx/cotizacion/)*\n
-               - *[Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)*\n
-               - *[Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)*\n`;
-
-            setTimeout(() => {
-                msg.reply(eventResponse);
-            }, 3000);
-        }
-
-        else if (text === "cursos") {
-            const courseResponse = `📚 *CURSOS*\n\n
-            🔹 *[Ver todos los cursos disponibles](https://bloqueqro.mx)*\n
-            🔹 *[Inscribirme en un curso](https://bloqueqro.mx/cursos/)*\n `;
-
-            setTimeout(() => {
-                msg.reply(courseResponse);
-            }, 3000);
-        }
         else if (text === "1") {
-            msg.reply("🔗 [Quiero hacer un evento en BLOQUE](https://bloqueqro.mx/cotizacion/)");
+            msg.reply("🔗 [Quiero hacer un evento en BLOQUE] por favor introduce la información que se pide: \n");
         }
         else if (text === "2") {
             msg.reply("🔗 [Conoce bloque](https://bloqueqro.mx)");
@@ -267,7 +246,7 @@ client.on("message", async (msg) => {
         else if (text === "6") {
             msg.reply("🔗 [Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)");
         }
-        else if (text === "7") {
+        else if (text === "3") {
             msg.reply("🔗 [si requieres ayuda marca al:](442 238 7700 ext: 1012)");
         }
         else {

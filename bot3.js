@@ -2,6 +2,7 @@ const { Client, LocalAuth } = require("whatsapp-web.js");
 const qrcode = require("qrcode-terminal");
 const { google } = require("googleapis");
 const fs = require("fs");
+const axios = require('axios'); // Add axios for API calls
 
 const client = new Client({
     authStrategy: new LocalAuth(),
@@ -15,6 +16,7 @@ const auth = new google.auth.GoogleAuth({
 const calendar = google.calendar({ version: "v3", auth });
 const calendarId = "0db2b3851de0802b3c7d7fe3a970808e67ddf6ad013d0fd6dc3924353fc726cd@group.calendar.google.com";
 const pendingAppointments = {}; // Objeto para almacenar citas en espera
+const formState = {}; // Object to store form states
 
 
 // Buscar el siguiente horario disponible
@@ -85,7 +87,7 @@ async function createCalendarEvent(msg, email, companyName, date) {
             resource: event,
         });
 
-        msg.reply(`✅ Tu pregira ha sido agendada el ${date.toLocaleString()} \n📅 Link del evento: ${response.data.htmlLink} \n lugar: https://maps.app.goo.gl/JSNuNMdzvfxbQacNA`);
+        msg.reply(`✅ Tu pregira ha sido agendada el ${date.toLocaleString()} \n📅 Link del evento: ${response.data.htmlLink}`);
         delete pendingAppointments[msg.from]; // Eliminar la reserva temporal
     } catch (error) {
         console.error("Error creando evento:", error);
@@ -96,6 +98,12 @@ async function createCalendarEvent(msg, email, companyName, date) {
 client.on("message", async (msg) => {
     if (!msg.isGroup) {
         const text = msg.body.toLowerCase().trim();
+        const chatId = msg.from;
+
+        if (formState[chatId]) {
+            handleFormResponse(msg, text);
+            return;
+        }
 
         const confirmMatch = text.match(/^confirmar (\S+) (.+)$/);
         if (confirmMatch) {
@@ -112,7 +120,11 @@ client.on("message", async (msg) => {
             return; // Ensure no further processing
         }
 
-        if (text === "3") {
+        if (text === "1") {
+            formState[chatId] = { step: 1, data: { phone: chatId } };
+            msg.reply("Por favor, proporciona tu nombre completo:");
+        } 
+        else if (text === "3") {
             msg.reply("🔍 Buscando disponibilidad...");
             const availableSlot = await getNextAvailableSlot();
             if (availableSlot) {
@@ -125,7 +137,7 @@ client.on("message", async (msg) => {
         
         else if (text === "n") {
             if (!pendingAppointments[msg.from]) {
-                msg.reply("⚠️ No tienes una cita pendiente. Escribe *3* para iniciar.");
+                msg.reply("⚠️ No tienes una cita pendiente. Escribe *agendar pregira* para iniciar.");
                 return;
             }
 
@@ -223,8 +235,7 @@ client.on("message", async (msg) => {
             3️⃣ *[Agenda una pregira por BLOQUE]*\n
             4️⃣ *[Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)*\n
             5️⃣ *[Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)*\n
-            6️⃣ *[Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)*\n
-            7️⃣ *Atención especializada*`;
+            6️⃣ *[Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)*`;
 
             setTimeout(() => {
                 msg.reply(response);
@@ -252,9 +263,6 @@ client.on("message", async (msg) => {
                 msg.reply(courseResponse);
             }, 3000);
         }
-        else if (text === "1") {
-            msg.reply("🔗 [Quiero hacer un evento en BLOQUE](https://bloqueqro.mx/cotizacion/)");
-        }
         else if (text === "2") {
             msg.reply("🔗 [Conoce bloque](https://bloqueqro.mx)");
         }
@@ -267,7 +275,7 @@ client.on("message", async (msg) => {
         else if (text === "6") {
             msg.reply("🔗 [Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)");
         }
-        else if (text === "7") {
+        else if (text === "3") {
             msg.reply("🔗 [si requieres ayuda marca al:](442 238 7700 ext: 1012)");
         }
         else {
@@ -278,5 +286,38 @@ client.on("message", async (msg) => {
         }
     }
 });
+
+async function handleFormResponse(msg, text) {
+    const chatId = msg.from;
+    const state = formState[chatId];
+
+    switch (state.step) {
+        case 1:
+            state.data.fullName = text;
+            state.step++;
+            msg.reply("Por favor, proporciona tu correo electrónico:");
+            break;
+        case 2:
+            state.data.email = text;
+            state.step++;
+            msg.reply("Por favor, proporciona el nombre de tu empresa:");
+            break;
+        case 3:
+            state.data.company = text;
+            await submitForm(state.data);
+            msg.reply("✅ Tu información ha sido registrada correctamente.");
+            delete formState[chatId];
+            break;
+    }
+}
+
+async function submitForm(data) {
+    try {
+        const response = await axios.post('https://api.example.com/save', data);
+        console.log('Form submitted successfully:', response.data);
+    } catch (error) {
+        console.error('Error submitting form:', error);
+    }
+}
 
 client.initialize();
