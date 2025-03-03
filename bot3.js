@@ -223,7 +223,8 @@ client.on("message", async (msg) => {
             3️⃣ *[Agenda una pregira por BLOQUE]*\n
             4️⃣ *[Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)*\n
             5️⃣ *[Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)*\n
-            6️⃣ *[Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)*`;
+            6️⃣ *[Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)*\n
+            7️⃣ *Atención especializada*`;
 
             setTimeout(() => {
                 msg.reply(response);
@@ -265,6 +266,9 @@ client.on("message", async (msg) => {
         }
         else if (text === "6") {
             msg.reply("🔗 [Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)");
+        }
+        else if (text === "7") {
+            msg.reply("🔗 [si requieres ayuda marca al:](442 238 7700 ext: 1012)");
         }
         else {
             const defaultResponse = `🤖 No entiendo ese mensaje. Escribe *HOLA* para empezar o selecciona una opción válida.`;
