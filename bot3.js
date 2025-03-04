@@ -352,6 +352,7 @@ async function submitForm(data) {
         console.log('Form submitted successfully:', response.data);
     } catch (error) {
         console.error('Error submitting form:', error);
+        
     }
 }
 
