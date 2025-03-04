@@ -310,7 +310,7 @@ async function handleFormResponse(msg, text) {
         case 4:
             state.data.phone = text;
             state.step++;
-            msg.reply("Por favor, proporciona el aforo del evento:");
+            msg.reply("Por favor, proporciona el aforo del evento solo el número:");
             break;
         case 5:
             state.data.aforo = text;
@@ -352,7 +352,7 @@ async function submitForm(data) {
         console.log('Form submitted successfully:', response.data);
     } catch (error) {
         console.error('Error submitting form:', error);
-        
+
     }
 }
 
