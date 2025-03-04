@@ -121,7 +121,7 @@ client.on("message", async (msg) => {
         }
 
         if (text === "1") {
-            formState[chatId] = { step: 1, data: { phone: chatId } };
+            formState[chatId] = { step: 1, data: {} };
             msg.reply("Por favor, proporciona tu nombre completo:");
         } 
         else if (text === "3") {
@@ -230,7 +230,7 @@ client.on("message", async (msg) => {
         else if(text === "hola"){
             console.log(text);
             const response = `Hola, bienvenido al chat de información de bloque, se parte de nuestra comunidad al registrarte en (https://bloqueqro.mx/crear-cuenta/) .\n\n
-            1️⃣ *[Quiero hacer un evento en BLOQUE](https://bloqueqro.mx/cotizacion/)*\n
+            1️⃣ *[Quiero hacer un evento en BLOQUE]*\n
             2️⃣ *[Conoce bloque](https://bloqueqro.mx)*\n
             3️⃣ *[Agenda una pregira por BLOQUE]*\n
             4️⃣ *[Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)*\n
@@ -304,6 +304,21 @@ async function handleFormResponse(msg, text) {
             break;
         case 3:
             state.data.company = text;
+            state.step++;
+            msg.reply("Por favor, proporciona tu número de teléfono:");
+            break;
+        case 4:
+            state.data.phone = text;
+            state.step++;
+            msg.reply("Por favor, proporciona el aforo del evento:");
+            break;
+        case 5:
+            state.data.aforo = text;
+            state.step++;
+            msg.reply("Por favor, proporciona la fecha deseada para el evento (YYYY-MM-DD):");
+            break;
+        case 6:
+            state.data.eventDate = text;
             state.data.folio = generateFolio(); // Generate folio
             await submitForm(state.data);
             msg.reply(`✅ Tu información ha sido registrada correctamente. Tu folio es: ${state.data.folio}`);
@@ -322,8 +337,18 @@ function generateFolio() {
 }
 
 async function submitForm(data) {
+    const payload = {
+        nombre: data.fullName,
+        telefono: data.phone,
+        mail: data.email,
+        empresa: data.company,
+        aforo: data.aforo,
+        fecha: data.eventDate,
+        folio: data.folio
+    };
+
     try {
-        const response = await axios.post('https://api.example.com/save', data);
+        const response = await axios.post('http://localhost:8089/ficha', payload);
         console.log('Form submitted successfully:', response.data);
     } catch (error) {
         console.error('Error submitting form:', error);
