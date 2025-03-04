@@ -304,11 +304,21 @@ async function handleFormResponse(msg, text) {
             break;
         case 3:
             state.data.company = text;
+            state.data.folio = generateFolio(); // Generate folio
             await submitForm(state.data);
-            msg.reply("✅ Tu información ha sido registrada correctamente.");
+            msg.reply(`✅ Tu información ha sido registrada correctamente. Tu folio es: ${state.data.folio}`);
             delete formState[chatId];
             break;
     }
+}
+
+function generateFolio() {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let folio = '';
+    for (let i = 0; i < 10; i++) {
+        folio += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return folio;
 }
 
 async function submitForm(data) {
