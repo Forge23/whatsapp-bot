@@ -235,7 +235,8 @@ client.on("message", async (msg) => {
             3️⃣ *[Agenda una pregira por BLOQUE]*\n
             4️⃣ *[Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)*\n
             5️⃣ *[Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)*\n
-            6️⃣ *[Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)*`;
+            6️⃣ *[Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)* \n
+            7️⃣ *[ver estatus de solicitud]*\n`;
 
             setTimeout(() => {
                 msg.reply(response);
@@ -277,6 +278,20 @@ client.on("message", async (msg) => {
         }
         else if (text === "3") {
             msg.reply("🔗 [si requieres ayuda marca al:](442 238 7700 ext: 1012)");
+        }
+        else if (text === "7") {
+            msg.reply("🔗 [para verificar su estado de solicitud por favor escriba su folio:]");
+        }
+        else if (text.startsWith("folio ")) {
+            const folio = text.split(" ")[1];
+            const status = await checkStatus(folio);
+            if (status === 0) {
+                msg.reply("📄 Su solicitud está en revisión.");
+            } else if (status === 1) {
+                msg.reply("✅ Su solicitud ha sido aceptada.");
+            } else {
+                msg.reply("❌ No se encontró la solicitud con ese folio.");
+            }
         }
         else {
             const defaultResponse = `🤖 No entiendo ese mensaje. Escribe *HOLA* para empezar o selecciona una opción válida.`;
@@ -321,7 +336,7 @@ async function handleFormResponse(msg, text) {
             state.data.eventDate = text;
             state.data.folio = generateFolio(); // Generate folio
             await submitForm(state.data);
-            msg.reply(`✅ Tu información ha sido registrada correctamente. Tu folio es: ${state.data.folio}`);
+            msg.reply(`✅ Tu información ha sido registrada correctamente. Tu folio es: ${state.data.folio} para vericar su estatus escriba 7 y siga los pasos`);
             delete formState[chatId];
             break;
     }
@@ -353,6 +368,16 @@ async function submitForm(data) {
     } catch (error) {
         console.error('Error submitting form:', error);
 
+    }
+}
+
+async function checkStatus(folio) {
+    try {
+        const response = await axios.get(`http://localhost:8089/ficha/buscar/${folio}`);
+        return response.data.estatus;
+    } catch (error) {
+        console.error('Error checking status:', error);
+        return null;
     }
 }
 
