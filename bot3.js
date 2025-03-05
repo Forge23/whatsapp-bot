@@ -67,7 +67,7 @@ async function getNextAvailableSlot() {
 }
 
 // Crear evento en el calendario
-async function createCalendarEvent(msg, email, companyName, date) {
+async function createCalendarEvent(msg, email, companyName, date, folio) {
     try {
         const event = {
             summary: `Pregira - ${companyName} - ${email}`,
@@ -89,6 +89,7 @@ async function createCalendarEvent(msg, email, companyName, date) {
         });
 
         msg.reply(`✅ Tu pregira ha sido agendada el ${date.toLocaleString()} \n📅 Link del evento: ${response.data.htmlLink}`);
+        await updateToken(folio); // Update token after scheduling
         delete pendingAppointments[msg.from]; // Eliminar la reserva temporal
     } catch (error) {
         console.error("Error creando evento:", error);
@@ -122,7 +123,8 @@ client.on("message", async (msg) => {
             }
 
             const confirmedSlot = pendingAppointments[msg.from];
-            createCalendarEvent(msg, email, companyName, confirmedSlot);
+            const folio = schedulingState[chatId]?.folio;
+            createCalendarEvent(msg, email, companyName, confirmedSlot, folio);
             return; // Ensure no further processing
         }
 
@@ -288,19 +290,23 @@ async function handleSchedulingResponse(msg, text) {
 
     if (state.step === 1) {
         const folio = text;
-        const status = await checkStatus(folio);
-        if (status === 0) {
-            msg.reply("📄 Su solicitud está en revisión. No puede agendar una pregira en este momento.");
-            delete schedulingState[chatId];
-        } else if (status === 1) {
+        const { estatus, token } = await checkStatus(folio);
+        if (estatus === 0 && token === 0) {
             msg.reply("🔍 Buscando disponibilidad...");
             const availableSlot = await getNextAvailableSlot();
             if (availableSlot) {
                 pendingAppointments[chatId] = availableSlot;
+                schedulingState[chatId].folio = folio;
                 msg.reply(`📆 La próxima disponibilidad es el ${availableSlot.toLocaleString()}.\nResponde con:\n\n✅ *Confirmar [correo] [nombre de empresa]*\n❌ *n* para intentar con otro horario`);
             } else {
                 msg.reply("❌ No hay disponibilidad en la próxima semana.");
             }
+            delete schedulingState[chatId];
+        } else if (estatus === 1) {
+            msg.reply("✅ Su solicitud ha sido aceptada.");
+            delete schedulingState[chatId];
+        } else if (token !== 0) {
+            msg.reply("❌ Ya ha agendado una pregira con este folio.");
             delete schedulingState[chatId];
         } else {
             msg.reply("❌ No se encontró la solicitud con ese folio.");
@@ -381,10 +387,19 @@ async function submitForm(data) {
 async function checkStatus(folio) {
     try {
         const response = await axios.get(`http://localhost:8089/ficha/buscar/${folio}`);
-        return response.data.estatus, response.data.token;
+        return { estatus: response.data.estatus, token: response.data.token };
     } catch (error) {
         console.error('Error checking status:', error);
         return null;
+    }
+}
+
+async function updateToken(folio) {
+    try {
+        await axios.post(`http://localhost:8089/ficha/actualizar-token/${folio}`);
+        console.log('Token updated successfully');
+    } catch (error) {
+        console.error('Error updating token:', error);
     }
 }
 
