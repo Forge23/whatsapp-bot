@@ -88,8 +88,7 @@ async function createCalendarEvent(msg, email, companyName, date, folio) {
             resource: event,
         });
 
-        msg.reply(`✅ Tu pregira ha sido agendada el ${date.toLocaleString()} \n📅 Link del evento: ${response.data.htmlLink}`);
-        await updateToken(folio); // Update token after scheduling
+        msg.reply(`✅ Tu pregira ha sido agendada el ${date.toLocaleString()}`);
         delete pendingAppointments[msg.from]; // Eliminar la reserva temporal
     } catch (error) {
         console.error("Error creando evento:", error);
@@ -267,12 +266,12 @@ client.on("message", async (msg) => {
         else if (text.startsWith("folio ")) {
             const folio = text.split(" ")[1];
             const status = await checkStatus(folio);
-            if (status === 0) {
-                msg.reply("📄 Su solicitud está en revisión.");
-            } else if (status === 1) {
-                msg.reply("✅ Su solicitud ha sido aceptada.");
-            } else {
+            if (status === null) {
                 msg.reply("❌ No se encontró la solicitud con ese folio.");
+            } else if (status.estatus === 0) {
+                msg.reply("📄 Su solicitud está en revisión.");
+            } else if (status.estatus === 1) {
+                msg.reply("✅ Su solicitud ha sido aceptada.");
             }
         }
         else {
@@ -290,8 +289,12 @@ async function handleSchedulingResponse(msg, text) {
 
     if (state.step === 1) {
         const folio = text;
-        const { estatus, token } = await checkStatus(folio);
-        if (estatus === 1 && token === 0) {
+        const status = await checkStatus(folio);
+        if (status === null) {
+            msg.reply("❌ No se encontró la solicitud con ese folio.");
+            delete schedulingState[chatId];
+        } else if (status.estatus === 1 && status.token === 0) {
+            updateToken(folio);
             msg.reply("🔍 Buscando disponibilidad...");
             const availableSlot = await getNextAvailableSlot();
             if (availableSlot) {
@@ -302,14 +305,11 @@ async function handleSchedulingResponse(msg, text) {
                 msg.reply("❌ No hay disponibilidad en la próxima semana.");
             }
             delete schedulingState[chatId];
-        } else if (estatus === 0) {
+        } else if (status.estatus === 0) {
             msg.reply("❌ Su solicitud no ha sido aceptada.");
             delete schedulingState[chatId];
-        } else if (token !== 0) {
+        } else if (status.token === 1) {
             msg.reply("❌ Ya ha agendado una pregira con este folio.");
-            delete schedulingState[chatId];
-        } else {
-            msg.reply("❌ No se encontró la solicitud con ese folio.");
             delete schedulingState[chatId];
         }
     }
@@ -380,14 +380,17 @@ async function submitForm(data) {
         console.log('Form submitted successfully:', response.data);
     } catch (error) {
         console.error('Error submitting form:', error);
-
     }
 }
 
 async function checkStatus(folio) {
     try {
         const response = await axios.get(`http://localhost:8089/ficha/buscar/${folio}`);
-        return { estatus: response.data.estatus, token: response.data.token };
+        if (response.data) {
+            return { estatus: response.data.estatus, token: response.data.token };
+        } else {
+            return null;
+        }
     } catch (error) {
         console.error('Error checking status:', error);
         return null;
@@ -396,8 +399,7 @@ async function checkStatus(folio) {
 
 async function updateToken(folio) {
     try {
-        await axios.post(`http://localhost:8089/ficha/actualizar-token/${folio}`);
-        console.log('Token updated successfully');
+        await axios.put(`http://localhost:8089/ficha/token/${folio}`, {nuevoToken: 1});
     } catch (error) {
         console.error('Error updating token:', error);
     }
