@@ -17,6 +17,7 @@ const calendar = google.calendar({ version: "v3", auth });
 const calendarId = "0db2b3851de0802b3c7d7fe3a970808e67ddf6ad013d0fd6dc3924353fc726cd@group.calendar.google.com";
 const pendingAppointments = {}; // Objeto para almacenar citas en espera
 const formState = {}; // Object to store form states
+const schedulingState = {}; // Object to store scheduling states
 
 
 // Buscar el siguiente horario disponible
@@ -105,6 +106,11 @@ client.on("message", async (msg) => {
             return;
         }
 
+        if (schedulingState[chatId]) {
+            handleSchedulingResponse(msg, text);
+            return;
+        }
+
         const confirmMatch = text.match(/^confirmar (\S+) (.+)$/);
         if (confirmMatch) {
             const email = confirmMatch[1];
@@ -125,14 +131,8 @@ client.on("message", async (msg) => {
             msg.reply("Por favor, proporciona tu nombre completo:");
         } 
         else if (text === "3") {
-            msg.reply("🔍 Buscando disponibilidad...");
-            const availableSlot = await getNextAvailableSlot();
-            if (availableSlot) {
-                pendingAppointments[msg.from] = availableSlot;
-                msg.reply(`📆 La próxima disponibilidad es el ${availableSlot.toLocaleString()}.\nResponde con:\n\n✅ *Confirmar [correo] [nombre de empresa]*\n❌ *n* para intentar con otro horario`);
-            } else {
-                msg.reply("❌ No hay disponibilidad en la próxima semana.");
-            }
+            schedulingState[chatId] = { step: 1 };
+            msg.reply("Por favor, proporciona tu folio para verificar el estado de tu solicitud:");
         } 
         
         else if (text === "n") {
@@ -236,33 +236,13 @@ client.on("message", async (msg) => {
             4️⃣ *[Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)*\n
             5️⃣ *[Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)*\n
             6️⃣ *[Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)* \n
-            7️⃣ *[ver estatus de solicitud]*\n`;
+            7️⃣ *[Ver estatus de solicitud]*\n
+            8️⃣ *[ayuda perosonalizada]*`;
 
             setTimeout(() => {
                 msg.reply(response);
             }, 3000);
 
-        }
-
-        else if (text === "eventos") {
-            const eventResponse = `📅 *EVENTOS*\n\n
-            a) *[Quiero hacer un evento en BLOQUE](https://bloqueqro.mx/cotizacion/)*\n
-               - *[Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)*\n
-               - *[Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)*\n`;
-
-            setTimeout(() => {
-                msg.reply(eventResponse);
-            }, 3000);
-        }
-
-        else if (text === "cursos") {
-            const courseResponse = `📚 *CURSOS*\n\n
-            🔹 *[Ver todos los cursos disponibles](https://bloqueqro.mx)*\n
-            🔹 *[Inscribirme en un curso](https://bloqueqro.mx/cursos/)*\n `;
-
-            setTimeout(() => {
-                msg.reply(courseResponse);
-            }, 3000);
         }
         else if (text === "2") {
             msg.reply("🔗 [Conoce bloque](https://bloqueqro.mx)");
@@ -276,11 +256,11 @@ client.on("message", async (msg) => {
         else if (text === "6") {
             msg.reply("🔗 [Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)");
         }
-        else if (text === "3") {
+        else if (text === "8") {
             msg.reply("🔗 [si requieres ayuda marca al:](442 238 7700 ext: 1012)");
         }
         else if (text === "7") {
-            msg.reply("🔗 [para verificar su estado de solicitud por favor escriba su folio:]");
+            msg.reply("🔗 [para verificar su estado de solicitud por favor escriba: folio {el folio que se le otorgo}]");
         }
         else if (text.startsWith("folio ")) {
             const folio = text.split(" ")[1];
@@ -301,6 +281,33 @@ client.on("message", async (msg) => {
         }
     }
 });
+
+async function handleSchedulingResponse(msg, text) {
+    const chatId = msg.from;
+    const state = schedulingState[chatId];
+
+    if (state.step === 1) {
+        const folio = text;
+        const status = await checkStatus(folio);
+        if (status === 0) {
+            msg.reply("📄 Su solicitud está en revisión. No puede agendar una pregira en este momento.");
+            delete schedulingState[chatId];
+        } else if (status === 1) {
+            msg.reply("🔍 Buscando disponibilidad...");
+            const availableSlot = await getNextAvailableSlot();
+            if (availableSlot) {
+                pendingAppointments[chatId] = availableSlot;
+                msg.reply(`📆 La próxima disponibilidad es el ${availableSlot.toLocaleString()}.\nResponde con:\n\n✅ *Confirmar [correo] [nombre de empresa]*\n❌ *n* para intentar con otro horario`);
+            } else {
+                msg.reply("❌ No hay disponibilidad en la próxima semana.");
+            }
+            delete schedulingState[chatId];
+        } else {
+            msg.reply("❌ No se encontró la solicitud con ese folio.");
+            delete schedulingState[chatId];
+        }
+    }
+}
 
 async function handleFormResponse(msg, text) {
     const chatId = msg.from;
@@ -374,7 +381,7 @@ async function submitForm(data) {
 async function checkStatus(folio) {
     try {
         const response = await axios.get(`http://localhost:8089/ficha/buscar/${folio}`);
-        return response.data.estatus;
+        return response.data.estatus, response.data.token;
     } catch (error) {
         console.error('Error checking status:', error);
         return null;
