@@ -291,7 +291,7 @@ async function handleSchedulingResponse(msg, text) {
     if (state.step === 1) {
         const folio = text;
         const { estatus, token } = await checkStatus(folio);
-        if (estatus === 0 && token === 0) {
+        if (estatus === 1 && token === 0) {
             msg.reply("🔍 Buscando disponibilidad...");
             const availableSlot = await getNextAvailableSlot();
             if (availableSlot) {
@@ -302,8 +302,8 @@ async function handleSchedulingResponse(msg, text) {
                 msg.reply("❌ No hay disponibilidad en la próxima semana.");
             }
             delete schedulingState[chatId];
-        } else if (estatus === 1) {
-            msg.reply("✅ Su solicitud ha sido aceptada.");
+        } else if (estatus === 0) {
+            msg.reply("❌ Su solicitud no ha sido aceptada.");
             delete schedulingState[chatId];
         } else if (token !== 0) {
             msg.reply("❌ Ya ha agendado una pregira con este folio.");
