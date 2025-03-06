@@ -2,6 +2,7 @@ const { Client, LocalAuth } = require("whatsapp-web.js");
 const qrcode = require("qrcode-terminal");
 const { google } = require("googleapis");
 const fs = require("fs");
+const axios = require('axios'); // Add axios for API calls
 
 const client = new Client({
     authStrategy: new LocalAuth(),
@@ -15,6 +16,8 @@ const auth = new google.auth.GoogleAuth({
 const calendar = google.calendar({ version: "v3", auth });
 const calendarId = "0db2b3851de0802b3c7d7fe3a970808e67ddf6ad013d0fd6dc3924353fc726cd@group.calendar.google.com";
 const pendingAppointments = {}; // Objeto para almacenar citas en espera
+const formState = {}; // Object to store form states
+const schedulingState = {}; // Object to store scheduling states
 
 
 // Buscar el siguiente horario disponible
@@ -23,48 +26,54 @@ async function getNextAvailableSlot() {
     now.setDate(now.getDate() + 1); // Buscar desde mañana
     now.setHours(9, 0, 0, 0); // Inicio de jornada
 
-    const endOfWeek = new Date();
-    endOfWeek.setDate(now.getDate() + 6); // Buscar en la próxima semana
-
-    const response = await calendar.events.list({
-        calendarId,
-        timeMin: now.toISOString(),
-        timeMax: endOfWeek.toISOString(),
-        singleEvents: true,
-        orderBy: "startTime",
-    });
-
-    const events = response.data.items;
     let availableSlot = null;
 
-    for (let day = 0; day < 7; day++) {
-        let checkDate = new Date(now);
-        checkDate.setDate(now.getDate() + day);
+    while (!availableSlot) {
+        const endOfWeek = new Date(now);
+        endOfWeek.setDate(now.getDate() + 6); // Buscar en la próxima semana
 
-        // Saltar jueves a domingo
-        if (checkDate.getDay() < 1 || checkDate.getDay() > 3) continue;
+        const response = await calendar.events.list({
+            calendarId,
+            timeMin: now.toISOString(),
+            timeMax: endOfWeek.toISOString(),
+            singleEvents: true,
+            orderBy: "startTime",
+        });
 
-        checkDate.setHours(9, 0, 0, 0);
-        while (checkDate.getHours() < 12) { // Hasta las 12 PM
-            const conflict = events.some(event => {
-                const eventStart = new Date(event.start.dateTime);
-                const eventEnd = new Date(event.end.dateTime);
-                return checkDate >= eventStart && checkDate < eventEnd;
-            });
+        const events = response.data.items;
 
-            if (!conflict) {
-                availableSlot = new Date(checkDate);
-                return availableSlot;
+        for (let day = 0; day < 7; day++) {
+            let checkDate = new Date(now);
+            checkDate.setDate(now.getDate() + day);
+
+            // Saltar jueves a domingo
+            if (checkDate.getDay() < 1 || checkDate.getDay() > 3) continue;
+
+            checkDate.setHours(9, 0, 0, 0);
+            while (checkDate.getHours() < 12) { // Hasta las 12 PM
+                const conflict = events.some(event => {
+                    const eventStart = new Date(event.start.dateTime);
+                    const eventEnd = new Date(event.end.dateTime);
+                    return checkDate >= eventStart && checkDate < eventEnd;
+                });
+
+                if (!conflict) {
+                    availableSlot = new Date(checkDate);
+                    return availableSlot;
+                }
+                checkDate.setHours(checkDate.getHours() + 1);
             }
-            checkDate.setHours(checkDate.getHours() + 1);
         }
+
+        // Si no se encontró disponibilidad, avanzar una semana
+        now.setDate(now.getDate() + 7);
     }
 
     return null;
 }
 
 // Crear evento en el calendario
-async function createCalendarEvent(msg, email, companyName, date) {
+async function createCalendarEvent(msg, email, companyName, date, folio) {
     try {
         const event = {
             summary: `Pregira - ${companyName} - ${email}`,
@@ -85,7 +94,7 @@ async function createCalendarEvent(msg, email, companyName, date) {
             resource: event,
         });
 
-        msg.reply(`✅ Tu pregira ha sido agendada el ${date.toLocaleString()} \n📅 Link del evento: ${response.data.htmlLink} \n lugar: https://maps.app.goo.gl/JSNuNMdzvfxbQacNA`);
+        msg.reply(`✅ Tu pregira ha sido agendada el ${date.toLocaleString()}`);
         delete pendingAppointments[msg.from]; // Eliminar la reserva temporal
     } catch (error) {
         console.error("Error creando evento:", error);
@@ -96,6 +105,17 @@ async function createCalendarEvent(msg, email, companyName, date) {
 client.on("message", async (msg) => {
     if (!msg.isGroup) {
         const text = msg.body.toLowerCase().trim();
+        const chatId = msg.from;
+
+        if (formState[chatId]) {
+            handleFormResponse(msg, text);
+            return;
+        }
+
+        if (schedulingState[chatId]) {
+            handleSchedulingResponse(msg, text);
+            return;
+        }
 
         const confirmMatch = text.match(/^confirmar (\S+) (.+)$/);
         if (confirmMatch) {
@@ -108,24 +128,23 @@ client.on("message", async (msg) => {
             }
 
             const confirmedSlot = pendingAppointments[msg.from];
-            createCalendarEvent(msg, email, companyName, confirmedSlot);
+            const folio = schedulingState[chatId]?.folio;
+            createCalendarEvent(msg, email, companyName, confirmedSlot, folio);
             return; // Ensure no further processing
         }
 
-        if (text === "3") {
-            msg.reply("🔍 Buscando disponibilidad...");
-            const availableSlot = await getNextAvailableSlot();
-            if (availableSlot) {
-                pendingAppointments[msg.from] = availableSlot;
-                msg.reply(`📆 La próxima disponibilidad es el ${availableSlot.toLocaleString()}.\nResponde con:\n\n✅ *Confirmar [correo] [nombre de empresa]*\n❌ *n* para intentar con otro horario`);
-            } else {
-                msg.reply("❌ No hay disponibilidad en la próxima semana.");
-            }
+        if (text === "1") {
+            formState[chatId] = { step: 1, data: {} };
+            msg.reply("Por favor, proporciona tu nombre completo:");
+        } 
+        else if (text === "3") {
+            schedulingState[chatId] = { step: 1 };
+            msg.reply("Por favor, proporciona tu folio para verificar el estado de tu solicitud:");
         } 
         
         else if (text === "n") {
             if (!pendingAppointments[msg.from]) {
-                msg.reply("⚠️ No tienes una cita pendiente. Escribe *3* para iniciar.");
+                msg.reply("⚠️ No tienes una cita pendiente. Escribe *agendar pregira* para iniciar.");
                 return;
             }
 
@@ -218,42 +237,19 @@ client.on("message", async (msg) => {
         else if(text === "hola"){
             console.log(text);
             const response = `Hola, bienvenido al chat de información de bloque, se parte de nuestra comunidad al registrarte en (https://bloqueqro.mx/crear-cuenta/) .\n\n
-            1️⃣ *[Quiero hacer un evento en BLOQUE](https://bloqueqro.mx/cotizacion/)*\n
+            1️⃣ *[Quiero hacer un evento en BLOQUE]*\n
             2️⃣ *[Conoce bloque](https://bloqueqro.mx)*\n
             3️⃣ *[Agenda una pregira por BLOQUE]*\n
             4️⃣ *[Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)*\n
             5️⃣ *[Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)*\n
-            6️⃣ *[Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)*\n
-            7️⃣ *Atención especializada*`;
+            6️⃣ *[Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)* \n
+            7️⃣ *[Ver estatus de solicitud]*\n
+            8️⃣ *[ayuda perosonalizada]*`;
 
             setTimeout(() => {
                 msg.reply(response);
             }, 3000);
 
-        }
-
-        else if (text === "eventos") {
-            const eventResponse = `📅 *EVENTOS*\n\n
-            a) *[Quiero hacer un evento en BLOQUE](https://bloqueqro.mx/cotizacion/)*\n
-               - *[Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)*\n
-               - *[Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)*\n`;
-
-            setTimeout(() => {
-                msg.reply(eventResponse);
-            }, 3000);
-        }
-
-        else if (text === "cursos") {
-            const courseResponse = `📚 *CURSOS*\n\n
-            🔹 *[Ver todos los cursos disponibles](https://bloqueqro.mx)*\n
-            🔹 *[Inscribirme en un curso](https://bloqueqro.mx/cursos/)*\n `;
-
-            setTimeout(() => {
-                msg.reply(courseResponse);
-            }, 3000);
-        }
-        else if (text === "1") {
-            msg.reply("🔗 [Quiero hacer un evento en BLOQUE](https://bloqueqro.mx/cotizacion/)");
         }
         else if (text === "2") {
             msg.reply("🔗 [Conoce bloque](https://bloqueqro.mx)");
@@ -267,8 +263,22 @@ client.on("message", async (msg) => {
         else if (text === "6") {
             msg.reply("🔗 [Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)");
         }
-        else if (text === "7") {
+        else if (text === "8") {
             msg.reply("🔗 [si requieres ayuda marca al:](442 238 7700 ext: 1012)");
+        }
+        else if (text === "7") {
+            msg.reply("🔗 [para verificar su estado de solicitud por favor escriba: folio {el folio que se le otorgo}]");
+        }
+        else if (text.startsWith("folio ")) {
+            const folio = text.split(" ")[1];
+            const status = await checkStatus(folio);
+            if (status === null) {
+                msg.reply("❌ No se encontró la solicitud con ese folio.");
+            } else if (status.estatus === 0) {
+                msg.reply("📄 Su solicitud está en revisión.");
+            } else if (status.estatus === 1) {
+                msg.reply("✅ Su solicitud ha sido aceptada.");
+            }
         }
         else {
             const defaultResponse = `🤖 No entiendo ese mensaje. Escribe *HOLA* para empezar o selecciona una opción válida.`;
@@ -278,5 +288,127 @@ client.on("message", async (msg) => {
         }
     }
 });
+
+async function handleSchedulingResponse(msg, text) {
+    const chatId = msg.from;
+    const state = schedulingState[chatId];
+
+    if (state.step === 1) {
+        const folio = text;
+        const status = await checkStatus(folio);
+        if (status === null) {
+            msg.reply("❌ No se encontró la solicitud con ese folio.");
+            delete schedulingState[chatId];
+        } else if (status.estatus === 1 && status.token === 0) {
+            updateToken(folio);
+            msg.reply("🔍 Buscando disponibilidad...");
+            const availableSlot = await getNextAvailableSlot();
+            if (availableSlot) {
+                pendingAppointments[chatId] = availableSlot;
+                schedulingState[chatId].folio = folio;
+                msg.reply(`📆 La próxima disponibilidad es el ${availableSlot.toLocaleString()}.\nResponde con:\n\n✅ *Confirmar [correo] [nombre de empresa]*\n❌ *n* para intentar con otro horario`);
+            } else {
+                msg.reply("❌ No hay disponibilidad en la próxima semana.");
+            }
+            delete schedulingState[chatId];
+        } else if (status.estatus === 0) {
+            msg.reply("❌ Su solicitud no ha sido aceptada.");
+            delete schedulingState[chatId];
+        } else if (status.token === 1) {
+            msg.reply("❌ Ya ha agendado una pregira con este folio.");
+            delete schedulingState[chatId];
+        }
+    }
+}
+
+async function handleFormResponse(msg, text) {
+    const chatId = msg.from;
+    const state = formState[chatId];
+
+    switch (state.step) {
+        case 1:
+            state.data.fullName = text;
+            state.step++;
+            msg.reply("Por favor, proporciona tu correo electrónico:");
+            break;
+        case 2:
+            state.data.email = text;
+            state.step++;
+            msg.reply("Por favor, proporciona el nombre de tu empresa:");
+            break;
+        case 3:
+            state.data.company = text;
+            state.step++;
+            msg.reply("Por favor, proporciona tu número de teléfono:");
+            break;
+        case 4:
+            state.data.phone = text;
+            state.step++;
+            msg.reply("Por favor, proporciona el aforo del evento solo el número:");
+            break;
+        case 5:
+            state.data.aforo = text;
+            state.step++;
+            msg.reply("Por favor, proporciona la fecha deseada para el evento (YYYY-MM-DD):");
+            break;
+        case 6:
+            state.data.eventDate = text;
+            state.data.folio = generateFolio(); // Generate folio
+            await submitForm(state.data);
+            msg.reply(`✅ Tu información ha sido registrada correctamente. Tu folio es: ${state.data.folio} para vericar su estatus escriba 7 y siga los pasos`);
+            delete formState[chatId];
+            break;
+    }
+}
+
+function generateFolio() {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let folio = '';
+    for (let i = 0; i < 10; i++) {
+        folio += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return folio;
+}
+
+async function submitForm(data) {
+    const payload = {
+        nombre: data.fullName,
+        telefono: data.phone,
+        mail: data.email,
+        empresa: data.company,
+        aforo: data.aforo,
+        fecha: data.eventDate,
+        folio: data.folio
+    };
+
+    try {
+        const response = await axios.post('http://localhost:8089/ficha', payload);
+        console.log('Form submitted successfully:', response.data);
+    } catch (error) {
+        console.error('Error submitting form:', error);
+    }
+}
+
+async function checkStatus(folio) {
+    try {
+        const response = await axios.get(`http://localhost:8089/ficha/buscar/${folio}`);
+        if (response.data) {
+            return { estatus: response.data.estatus, token: response.data.token };
+        } else {
+            return null;
+        }
+    } catch (error) {
+        console.error('Error checking status:', error);
+        return null;
+    }
+}
+
+async function updateToken(folio) {
+    try {
+        await axios.put(`http://localhost:8089/ficha/token/${folio}`, {nuevoToken: 1});
+    } catch (error) {
+        console.error('Error updating token:', error);
+    }
+}
 
 client.initialize();
