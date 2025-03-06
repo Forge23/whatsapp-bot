@@ -3,6 +3,7 @@ const qrcode = require("qrcode-terminal");
 const { google } = require("googleapis");
 const fs = require("fs");
 const axios = require('axios'); // Add axios for API calls
+const { normalize } = require("path");
 
 const client = new Client({
     authStrategy: new LocalAuth(),
@@ -18,6 +19,7 @@ const calendarId = "0db2b3851de0802b3c7d7fe3a970808e67ddf6ad013d0fd6dc3924353fc7
 const pendingAppointments = {}; // Objeto para almacenar citas en espera
 const formState = {}; // Object to store form states
 const schedulingState = {}; // Object to store scheduling states
+const globalFolio = {}; // Variable global para almacenar el folio
 
 
 // Buscar el siguiente horario disponible
@@ -73,8 +75,17 @@ async function getNextAvailableSlot() {
 }
 
 // Crear evento en el calendario
-async function createCalendarEvent(msg, email, companyName, date, folio) {
+async function createCalendarEvent(msg, folio, date) {
     try {
+        const response = await axios.get(`http://localhost:8089/ficha/buscar/${folio}`);
+        const data = response.data;
+
+        if (!data || !data.mail || !data.empresa) {
+            throw new Error("Datos incompletos en la respuesta de la API");
+        }
+
+        const { mail: email, empresa: companyName } = data;
+
         const event = {
             summary: `Pregira - ${companyName} - ${email}`,
             location: "BLOQUE Centro de Innovación",
@@ -89,7 +100,7 @@ async function createCalendarEvent(msg, email, companyName, date, folio) {
             },
         };
 
-        const response = await calendar.events.insert({
+        await calendar.events.insert({
             calendarId,
             resource: event,
         });
@@ -117,10 +128,9 @@ client.on("message", async (msg) => {
             return;
         }
 
-        const confirmMatch = text.match(/^confirmar (\S+) (.+)$/);
+        const confirmMatch = text.match(/^s$/i);
         if (confirmMatch) {
-            const email = confirmMatch[1];
-            const companyName = confirmMatch[2];
+            const folio = globalFolio[chatId];
 
             if (!pendingAppointments[msg.from]) {
                 msg.reply("⚠️ No tienes una cita pendiente. Escribe *3* para iniciar.");
@@ -128,8 +138,7 @@ client.on("message", async (msg) => {
             }
 
             const confirmedSlot = pendingAppointments[msg.from];
-            const folio = schedulingState[chatId]?.folio;
-            createCalendarEvent(msg, email, companyName, confirmedSlot, folio);
+            createCalendarEvent(msg, folio, confirmedSlot);
             return; // Ensure no further processing
         }
 
@@ -189,7 +198,7 @@ client.on("message", async (msg) => {
 
             if (foundSlot) {
                 pendingAppointments[msg.from] = foundSlot;
-                msg.reply(`📆 La siguiente disponibilidad es el ${foundSlot.toLocaleString()}.\nResponde con:\n\n✅ *Confirmar [correo] [nombre de empresa]*\n❌ *n* para probar otra opción`);
+                msg.reply(`📆 La siguiente disponibilidad es el ${foundSlot.toLocaleString()}.\nResponde con:\n\n✅ *S*\n❌ *n* para probar otra opción`);
             } else {
                 // Si no hay más horarios disponibles en el día, buscar en el siguiente día hábil
                 nextSlot.setDate(nextSlot.getDate() + 1);
@@ -228,7 +237,7 @@ client.on("message", async (msg) => {
 
                 if (nextDayFoundSlot) {
                     pendingAppointments[msg.from] = nextDayFoundSlot;
-                    msg.reply(`📆 La siguiente disponibilidad es el ${nextDayFoundSlot.toLocaleString()}.\nResponde con:\n\n✅ *Confirmar [correo] [nombre de empresa]*\n❌ *n* para probar otra opción`);
+                    msg.reply(`📆 La siguiente disponibilidad es el ${nextDayFoundSlot.toLocaleString()}.\nResponde con:\n\n✅ *S*\n❌ *n* para probar otra opción`);
                 } else {
                     msg.reply("❌ No hay más horarios disponibles en los próximos días. Intenta de nuevo mañana.");
                 }
@@ -243,8 +252,7 @@ client.on("message", async (msg) => {
             4️⃣ *[Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)*\n
             5️⃣ *[Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)*\n
             6️⃣ *[Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)* \n
-            7️⃣ *[Ver estatus de solicitud]*\n
-            8️⃣ *[ayuda perosonalizada]*`;
+            7️⃣ *[ayuda perosonalizada]*`;
 
             setTimeout(() => {
                 msg.reply(response);
@@ -263,22 +271,8 @@ client.on("message", async (msg) => {
         else if (text === "6") {
             msg.reply("🔗 [Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)");
         }
-        else if (text === "8") {
-            msg.reply("🔗 [si requieres ayuda marca al:](442 238 7700 ext: 1012)");
-        }
         else if (text === "7") {
-            msg.reply("🔗 [para verificar su estado de solicitud por favor escriba: folio {el folio que se le otorgo}]");
-        }
-        else if (text.startsWith("folio ")) {
-            const folio = text.split(" ")[1];
-            const status = await checkStatus(folio);
-            if (status === null) {
-                msg.reply("❌ No se encontró la solicitud con ese folio.");
-            } else if (status.estatus === 0) {
-                msg.reply("📄 Su solicitud está en revisión.");
-            } else if (status.estatus === 1) {
-                msg.reply("✅ Su solicitud ha sido aceptada.");
-            }
+            msg.reply("🔗 [si requieres ayuda marca al:](442 238 7700 ext: 1012)");
         }
         else {
             const defaultResponse = `🤖 No entiendo ese mensaje. Escribe *HOLA* para empezar o selecciona una opción válida.`;
@@ -295,18 +289,19 @@ async function handleSchedulingResponse(msg, text) {
 
     if (state.step === 1) {
         const folio = text;
-        const status = await checkStatus(folio);
+        const status = await checkStatus(folio);        
         if (status === null) {
             msg.reply("❌ No se encontró la solicitud con ese folio.");
             delete schedulingState[chatId];
         } else if (status.estatus === 1 && status.token === 0) {
             updateToken(folio);
+            globalFolio[chatId] = folio; // Guardar el folio en la variable global
             msg.reply("🔍 Buscando disponibilidad...");
             const availableSlot = await getNextAvailableSlot();
             if (availableSlot) {
                 pendingAppointments[chatId] = availableSlot;
                 schedulingState[chatId].folio = folio;
-                msg.reply(`📆 La próxima disponibilidad es el ${availableSlot.toLocaleString()}.\nResponde con:\n\n✅ *Confirmar [correo] [nombre de empresa]*\n❌ *n* para intentar con otro horario`);
+                msg.reply(`📆 La próxima disponibilidad es el ${availableSlot.toLocaleString()}.\nResponde con:\n\n✅ *S*\n❌ *n* para intentar con otro horario`);
             } else {
                 msg.reply("❌ No hay disponibilidad en la próxima semana.");
             }
@@ -355,7 +350,7 @@ async function handleFormResponse(msg, text) {
             state.data.eventDate = text;
             state.data.folio = generateFolio(); // Generate folio
             await submitForm(state.data);
-            msg.reply(`✅ Tu información ha sido registrada correctamente. Tu folio es: ${state.data.folio} para vericar su estatus escriba 7 y siga los pasos`);
+            msg.reply(`✅ Tu información ha sido registrada correctamente. Tu folio es: ${state.data.folio} para iniciar el proceso de agendamiento presione *3*, recuerde que solo puede agendar una vez con su folio.`);
             delete formState[chatId];
             break;
     }
@@ -393,7 +388,7 @@ async function checkStatus(folio) {
     try {
         const response = await axios.get(`http://localhost:8089/ficha/buscar/${folio}`);
         if (response.data) {
-            return { estatus: response.data.estatus, token: response.data.token };
+            return { estatus: response.data.estatus, token: response.data.token, nombre: response.data.nombre, empresa: response.data.empresa, mail: response.data.mail };
         } else {
             return null;
         }
