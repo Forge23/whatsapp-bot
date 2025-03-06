@@ -26,41 +26,47 @@ async function getNextAvailableSlot() {
     now.setDate(now.getDate() + 1); // Buscar desde mañana
     now.setHours(9, 0, 0, 0); // Inicio de jornada
 
-    const endOfWeek = new Date();
-    endOfWeek.setDate(now.getDate() + 6); // Buscar en la próxima semana
-
-    const response = await calendar.events.list({
-        calendarId,
-        timeMin: now.toISOString(),
-        timeMax: endOfWeek.toISOString(),
-        singleEvents: true,
-        orderBy: "startTime",
-    });
-
-    const events = response.data.items;
     let availableSlot = null;
 
-    for (let day = 0; day < 7; day++) {
-        let checkDate = new Date(now);
-        checkDate.setDate(now.getDate() + day);
+    while (!availableSlot) {
+        const endOfWeek = new Date(now);
+        endOfWeek.setDate(now.getDate() + 6); // Buscar en la próxima semana
 
-        // Saltar jueves a domingo
-        if (checkDate.getDay() < 1 || checkDate.getDay() > 3) continue;
+        const response = await calendar.events.list({
+            calendarId,
+            timeMin: now.toISOString(),
+            timeMax: endOfWeek.toISOString(),
+            singleEvents: true,
+            orderBy: "startTime",
+        });
 
-        checkDate.setHours(9, 0, 0, 0);
-        while (checkDate.getHours() < 12) { // Hasta las 12 PM
-            const conflict = events.some(event => {
-                const eventStart = new Date(event.start.dateTime);
-                const eventEnd = new Date(event.end.dateTime);
-                return checkDate >= eventStart && checkDate < eventEnd;
-            });
+        const events = response.data.items;
 
-            if (!conflict) {
-                availableSlot = new Date(checkDate);
-                return availableSlot;
+        for (let day = 0; day < 7; day++) {
+            let checkDate = new Date(now);
+            checkDate.setDate(now.getDate() + day);
+
+            // Saltar jueves a domingo
+            if (checkDate.getDay() < 1 || checkDate.getDay() > 3) continue;
+
+            checkDate.setHours(9, 0, 0, 0);
+            while (checkDate.getHours() < 12) { // Hasta las 12 PM
+                const conflict = events.some(event => {
+                    const eventStart = new Date(event.start.dateTime);
+                    const eventEnd = new Date(event.end.dateTime);
+                    return checkDate >= eventStart && checkDate < eventEnd;
+                });
+
+                if (!conflict) {
+                    availableSlot = new Date(checkDate);
+                    return availableSlot;
+                }
+                checkDate.setHours(checkDate.getHours() + 1);
             }
-            checkDate.setHours(checkDate.getHours() + 1);
         }
+
+        // Si no se encontró disponibilidad, avanzar una semana
+        now.setDate(now.getDate() + 7);
     }
 
     return null;
