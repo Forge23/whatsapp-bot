@@ -327,6 +327,11 @@ async function handleFormResponse(msg, text) {
             msg.reply("Por favor, proporciona tu correo electrónico:");
             break;
         case 2:
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(text)) {
+                msg.reply("❌ Correo electrónico no válido. Por favor, proporciona un correo electrónico válido:");
+                return;
+            }
             state.data.email = text;
             state.step++;
             msg.reply("Por favor, proporciona el nombre de tu empresa:");
@@ -347,6 +352,11 @@ async function handleFormResponse(msg, text) {
             msg.reply("Por favor, proporciona la fecha deseada para el evento (YYYY-MM-DD):");
             break;
         case 6:
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!dateRegex.test(text)) {
+                msg.reply("❌ Formato de fecha no válido. Por favor, proporciona una fecha válida (YYYY-MM-DD):");
+                return;
+            }
             state.data.eventDate = text;
             state.data.folio = generateFolio(); // Generate folio
             await submitForm(state.data);
