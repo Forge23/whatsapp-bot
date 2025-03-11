@@ -373,7 +373,8 @@ async function submitForm(data) {
         empresa: data.company,
         aforo: data.aforo,
         fecha: data.eventDate,
-        folio: data.folio
+        folio: data.folio,
+        estatus: 1
     };
 
     try {
