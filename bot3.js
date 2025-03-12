@@ -105,7 +105,7 @@ async function createCalendarEvent(msg, folio, date) {
             resource: event,
         });
 
-        msg.reply(`✅ Tu pregira ha sido agendada el ${date.toLocaleString()}`);
+        msg.reply(`✅ Tu pregira ha sido agendada el ${date.toLocaleString()} \n dirección: https://maps.app.goo.gl/EJsdeEDLNEpw2jfx9`);
         delete pendingAppointments[msg.from]; // Eliminar la reserva temporal
     } catch (error) {
         console.error("Error creando evento:", error);
@@ -349,18 +349,18 @@ async function handleFormResponse(msg, text) {
         case 5:
             state.data.aforo = text;
             state.step++;
-            msg.reply("Por favor, proporciona la fecha deseada para el evento (YYYY-MM-DD):");
+            msg.reply("Por favor, proporciona la fecha deseada para el evento (DD-MM-YYYY):");
             break;
         case 6:
-            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            const dateRegex = /^\d{2}-\d{2}-\d{4}$/;
             if (!dateRegex.test(text)) {
-                msg.reply("❌ Formato de fecha no válido. Por favor, proporciona una fecha válida (YYYY-MM-DD):");
+                msg.reply("❌ Formato de fecha no válido. Por favor, proporciona una fecha válida (DD-MM-YYYY):");
                 return;
             }
             state.data.eventDate = text;
             state.data.folio = generateFolio(); // Generate folio
             await submitForm(state.data);
-            msg.reply(`✅ Tu información ha sido registrada correctamente. Tu folio es: ${state.data.folio} para iniciar el proceso de agendamiento presione *3*, recuerde que solo puede agendar una vez con su folio.`);
+            msg.reply(`✅ Tu información ha sido registrada correctamente. Tu folio es: ${state.data.folio} para agendar una cita presione *3*, recuerde que solo puede agendar una vez con su folio.`);
             delete formState[chatId];
             break;
     }
