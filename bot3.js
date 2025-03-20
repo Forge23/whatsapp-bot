@@ -105,11 +105,11 @@ async function createCalendarEvent(msg, folio, date) {
             resource: event,
         });
 
-        msg.reply(`✅ Tu pregira ha sido agendada el ${date.toLocaleString()} \n dirección: https://maps.app.goo.gl/EJsdeEDLNEpw2jfx9`);
+        msg.sendMessage(`✅ Tu pregira ha sido agendada el ${date.toLocaleString()} \n dirección: https://maps.app.goo.gl/EJsdeEDLNEpw2jfx9`);
         delete pendingAppointments[msg.from]; // Eliminar la reserva temporal
     } catch (error) {
         console.error("Error creando evento:", error);
-        msg.reply("❌ Ocurrió un error al agendar tu recorrido. Intenta de nuevo.");
+        msg.sendMessage("❌ Ocurrió un error al agendar tu recorrido. Intenta de nuevo.");
     }
 }
 
@@ -133,7 +133,7 @@ client.on("message", async (msg) => {
             const folio = globalFolio[chatId];
 
             if (!pendingAppointments[msg.from]) {
-                msg.reply("⚠️ No tienes una cita pendiente. Escribe *3* para iniciar.");
+                msg.sendMessage("⚠️ No tienes una cita pendiente. Escribe *3* para iniciar.");
                 return;
             }
 
@@ -144,16 +144,16 @@ client.on("message", async (msg) => {
 
         if (text === "1") {
             formState[chatId] = { step: 1, data: {} };
-            msg.reply("Por favor, proporciona tu nombre completo:");
+            msg.sendMessage("Por favor, proporciona tu nombre completo:");
         } 
         else if (text === "3") {
             schedulingState[chatId] = { step: 1 };
-            msg.reply("Por favor, proporciona tu folio para verificar el estado de tu solicitud:");
+            msg.sendMessage("Por favor, proporciona tu folio:");
         } 
         
         else if (text === "n") {
             if (!pendingAppointments[msg.from]) {
-                msg.reply("⚠️ No tienes una cita pendiente. Escribe *agendar pregira* para iniciar.");
+                msg.sendMessage("⚠️ No tienes una cita pendiente. Escribe *agendar pregira* para iniciar.");
                 return;
             }
 
@@ -198,7 +198,7 @@ client.on("message", async (msg) => {
 
             if (foundSlot) {
                 pendingAppointments[msg.from] = foundSlot;
-                msg.reply(`📆 La siguiente disponibilidad es el ${foundSlot.toLocaleString()}.\nResponde con:\n\n✅ *S*\n❌ *n* para probar otra opción`);
+                msg.sendMessage(`📆 La siguiente disponibilidad es el ${foundSlot.toLocaleString()}.\nResponde con:\n\n✅ *S*\n❌ *n* para probar otra opción`);
             } else {
                 // Si no hay más horarios disponibles en el día, buscar en el siguiente día hábil
                 nextSlot.setDate(nextSlot.getDate() + 1);
@@ -237,9 +237,9 @@ client.on("message", async (msg) => {
 
                 if (nextDayFoundSlot) {
                     pendingAppointments[msg.from] = nextDayFoundSlot;
-                    msg.reply(`📆 La siguiente disponibilidad es el ${nextDayFoundSlot.toLocaleString()}.\nResponde con:\n\n✅ *S*\n❌ *n* para probar otra opción`);
+                    msg.sendMessage(`📆 La siguiente disponibilidad es el ${nextDayFoundSlot.toLocaleString()}.\nResponde con:\n\n✅ *S*\n❌ *n* para probar otra opción`);
                 } else {
-                    msg.reply("❌ No hay más horarios disponibles en los próximos días. Intenta de nuevo mañana.");
+                    msg.sendMessage("❌ No hay más horarios disponibles en los próximos días. Intenta de nuevo mañana.");
                 }
             }
         }
@@ -255,29 +255,29 @@ client.on("message", async (msg) => {
             7️⃣ *[ayuda perosonalizada]*`;
 
             setTimeout(() => {
-                msg.reply(response);
+                msg.sendMessage(response);
             }, 3000);
 
         }
         else if (text === "2") {
-            msg.reply("🔗 [Conoce bloque](https://bloqueqro.mx)");
+            msg.sendMessage("🔗 [Conoce bloque](https://bloqueqro.mx)");
         }
         else if (text === "4") {
-            msg.reply("🔗 [Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)");
+            msg.sendMessage("🔗 [Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)");
         }
         else if (text === "5") {
-            msg.reply("🔗 [Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)");
+            msg.sendMessage("🔗 [Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)");
         }
         else if (text === "6") {
-            msg.reply("🔗 [Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)");
+            msg.sendMessage("🔗 [Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)");
         }
         else if (text === "7") {
-            msg.reply("🔗 [si requieres ayuda marca al:](442 238 7700 ext: 1012)");
+            msg.sendMessage("🔗 [si requieres ayuda marca al:](442 238 7700 ext: 1012)");
         }
         else {
             const defaultResponse = `🤖 No entiendo ese mensaje. Escribe *HOLA* para empezar o selecciona una opción válida.`;
             setTimeout(() => {
-                msg.reply(defaultResponse);
+                msg.sendMessage(defaultResponse);
             }, 3000);
         }
     }
@@ -291,26 +291,26 @@ async function handleSchedulingResponse(msg, text) {
         const folio = text;
         const status = await checkStatus(folio);        
         if (status === null) {
-            msg.reply("❌ No se encontró la solicitud con ese folio.");
+            msg.sendMessage("❌ No se encontró la solicitud con ese folio.");
             delete schedulingState[chatId];
         } else if (status.estatus === 1 && status.token === 0) {
             updateToken(folio);
             globalFolio[chatId] = folio; // Guardar el folio en la variable global
-            msg.reply("🔍 Buscando disponibilidad...");
+            msg.sendMessage("🔍 Buscando disponibilidad...");
             const availableSlot = await getNextAvailableSlot();
             if (availableSlot) {
                 pendingAppointments[chatId] = availableSlot;
                 schedulingState[chatId].folio = folio;
-                msg.reply(`📆 La próxima disponibilidad es el ${availableSlot.toLocaleString()}.\nResponde con:\n\n✅ *S*\n❌ *n* para intentar con otro horario`);
+                msg.sendMessage(`📆 La próxima disponibilidad es el ${availableSlot.toLocaleString()}.\nResponde con:\n\n✅ *S*\n❌ *n* para intentar con otro horario`);
             } else {
-                msg.reply("❌ No hay disponibilidad en la próxima semana.");
+                msg.sendMessage("❌ No hay disponibilidad en la próxima semana.");
             }
             delete schedulingState[chatId];
         } else if (status.estatus === 0) {
-            msg.reply("❌ Su solicitud no ha sido aceptada.");
+            msg.sendMessage("❌ Su solicitud no ha sido aceptada.");
             delete schedulingState[chatId];
         } else if (status.token === 1) {
-            msg.reply("❌ Ya ha agendado una pregira con este folio.");
+            msg.sendMessage("❌ Ya ha agendado una pregira con este folio.");
             delete schedulingState[chatId];
         }
     }
@@ -324,43 +324,43 @@ async function handleFormResponse(msg, text) {
         case 1:
             state.data.fullName = text;
             state.step++;
-            msg.reply("Por favor, proporciona tu correo electrónico:");
+            msg.sendMessage("Por favor, proporciona tu correo electrónico:");
             break;
         case 2:
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(text)) {
-                msg.reply("❌ Correo electrónico no válido. Por favor, proporciona un correo electrónico válido:");
+                msg.sendMessage("❌ Correo electrónico no válido. Por favor, proporciona un correo electrónico válido:");
                 return;
             }
             state.data.email = text;
             state.step++;
-            msg.reply("Por favor, proporciona el nombre de tu empresa:");
+            msg.sendMessage("Por favor, proporciona el nombre de tu empresa:");
             break;
         case 3:
             state.data.company = text;
             state.step++;
-            msg.reply("Por favor, proporciona tu número de teléfono:");
+            msg.sendMessage("Por favor, proporciona tu número de teléfono:");
             break;
         case 4:
             state.data.phone = text;
             state.step++;
-            msg.reply("Por favor, proporciona el aforo del evento solo el número:");
+            msg.sendMessage("Por favor, proporciona el aforo del evento solo el número:");
             break;
         case 5:
             state.data.aforo = text;
             state.step++;
-            msg.reply("Por favor, proporciona la fecha deseada para el evento (DD-MM-YYYY):");
+            msg.sendMessage("Por favor, proporciona la fecha deseada para el evento (DD-MM-YYYY):");
             break;
         case 6:
             const dateRegex = /^\d{2}-\d{2}-\d{4}$/;
             if (!dateRegex.test(text)) {
-                msg.reply("❌ Formato de fecha no válido. Por favor, proporciona una fecha válida (DD-MM-YYYY):");
+                msg.sendMessage("❌ Formato de fecha no válido. Por favor, proporciona una fecha válida (DD-MM-YYYY):");
                 return;
             }
             state.data.eventDate = text;
             state.data.folio = generateFolio(); // Generate folio
             await submitForm(state.data);
-            msg.reply(`✅ Tu información ha sido registrada correctamente. Tu folio es: ${state.data.folio} para agendar una cita presione *3*, recuerde que solo puede agendar una vez con su folio.`);
+            msg.sendMessage(`✅ Tu información ha sido registrada correctamente. Tu folio es: ${state.data.folio} para agendar una cita presione *3*, recuerde que solo puede agendar una vez con su folio.`);
             delete formState[chatId];
             break;
     }
