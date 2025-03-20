@@ -48,8 +48,8 @@ async function getNextAvailableSlot() {
             let checkDate = new Date(now);
             checkDate.setDate(now.getDate() + day);
 
-            // Saltar jueves a domingo
-            if (checkDate.getDay() < 1 || checkDate.getDay() > 3) continue;
+            // Saltar sábado y domingo
+            if (checkDate.getDay() === 0 || checkDate.getDay() === 6) continue;
 
             checkDate.setHours(9, 0, 0, 0);
             while (checkDate.getHours() < 12) { // Hasta las 12 PM
@@ -165,8 +165,8 @@ client.on("message", async (msg) => {
                 nextSlot.setHours(9, 0, 0, 0);
             }
 
-            // Saltar jueves a domingo
-            while (nextSlot.getDay() < 1 || nextSlot.getDay() > 3) {
+            // Saltar sábado y domingo
+            while (nextSlot.getDay() === 0 || nextSlot.getDay() === 6) {
                 nextSlot.setDate(nextSlot.getDate() + 1);
                 nextSlot.setHours(9, 0, 0, 0);
             }
@@ -204,8 +204,8 @@ client.on("message", async (msg) => {
                 nextSlot.setDate(nextSlot.getDate() + 1);
                 nextSlot.setHours(9, 0, 0, 0);
 
-                // Saltar jueves a domingo
-                while (nextSlot.getDay() < 1 || nextSlot.getDay() > 3) {
+                // Saltar sábado y domingo
+                while (nextSlot.getDay() === 0 || nextSlot.getDay() === 6) {
                     nextSlot.setDate(nextSlot.getDate() + 1);
                     nextSlot.setHours(9, 0, 0, 0);
                 }
