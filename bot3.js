@@ -11,10 +11,15 @@ const {
 
 const client = new Client({
     authStrategy: new LocalAuth(),
+    puppeteer: {
+        headless: true,
+        args: ['--no-sandbox']
+    }
 });
 
 client.on("qr", (qr) => {
     qrcode.generate(qr, { small: true });
+    console.log('QR Code generado. Por favor escanea con WhatsApp.');
 });
 
 client.on("ready", () => {
@@ -48,11 +53,11 @@ client.on("message", async (msg) => {
 
         if (text === "1") {
             formState[chatId] = { step: 1, data: {} };
-            msg.sendMessage("Por favor, proporciona tu nombre completo:");
+            msg.reply("Por favor, proporciona tu nombre completo:");
         } 
         else if (text === "3") {
             schedulingState[chatId] = { step: 1 };
-            msg.sendMessage("Por favor, proporciona tu folio:");
+            msg.reply("Por favor, proporciona tu folio:");
         }
         else if(text === "hola"){
             console.log(text);
@@ -65,33 +70,41 @@ client.on("message", async (msg) => {
             6️⃣ *[Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)* \n
             7️⃣ *[ayuda perosonalizada]*`;
 
-            setTimeout(() => {
-                msg.sendMessage(response);
-            }, 3000);
-
+            msg.reply(response);
         }
         else if (text === "2") {
-            msg.sendMessage("🔗 [Conoce bloque](https://bloqueqro.mx)");
+            msg.reply("🔗 [Conoce bloque](https://bloqueqro.mx)");
         }
         else if (text === "4") {
-            msg.sendMessage("🔗 [Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)");
+            msg.reply("🔗 [Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)");
         }
         else if (text === "5") {
-            msg.sendMessage("🔗 [Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)");
+            msg.reply("🔗 [Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)");
         }
         else if (text === "6") {
-            msg.sendMessage("🔗 [Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)");
+            msg.reply("🔗 [Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)");
         }
         else if (text === "7") {
-            msg.sendMessage("🔗 [si requieres ayuda marca al:](442 238 7700 ext: 1012)");
+            msg.reply("🔗 [si requieres ayuda marca al:](442 238 7700 ext: 1012)");
         }
         else {
             const defaultResponse = `🤖 No entiendo ese mensaje. Escribe *HOLA* para empezar o selecciona una opción válida.`;
-            setTimeout(() => {
-                msg.sendMessage(defaultResponse);
-            }, 3000);
+            msg.reply(defaultResponse);
         }
     }
 });
 
-client.initialize();
+process.on('SIGINT', async function() {
+    console.log('Cerrando cliente...');
+    try {
+        await client.destroy();
+    } catch (err) {
+        console.error('Error al cerrar el cliente:', err);
+    }
+    process.exit();
+});
+
+console.log('Iniciando cliente...');
+client.initialize().catch(err => {
+    console.error('Error al inicializar el cliente:', err);
+});

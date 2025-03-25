@@ -16,7 +16,7 @@ async function handleSchedulingResponse(msg, text) {
             try {
                 const data = await checkStatus(text);
                 if (!data) {
-                    msg.sendMessage("❌ Folio no encontrado. Por favor, verifica e intenta de nuevo:");
+                    msg.reply("❌ Folio no encontrado. Por favor, verifica e intenta de nuevo:");
                     return true;
                 }
 
@@ -25,18 +25,18 @@ async function handleSchedulingResponse(msg, text) {
                 
                 if (nextSlot) {
                     pendingAppointments[chatId] = nextSlot;
-                    msg.sendMessage(
+                    msg.reply(
                         `Horario disponible: ${nextSlot.toLocaleString()}\n` +
                         "¿Te gustaría agendar este horario?\n" +
                         "Responde *s* para confirmar o *n* para ver el siguiente horario disponible."
                     );
                 } else {
-                    msg.sendMessage("❌ No hay horarios disponibles en este momento.");
+                    msg.reply("❌ No hay horarios disponibles en este momento.");
                 }
                 
                 delete schedulingState[chatId];
             } catch (error) {
-                msg.sendMessage("❌ Error al verificar el folio. Por favor, intenta de nuevo.");
+                msg.reply("❌ Error al verificar el folio. Por favor, intenta de nuevo.");
             }
             break;
     }
@@ -46,7 +46,7 @@ async function handleSchedulingResponse(msg, text) {
 async function handleNextSlot(msg) {
     const chatId = msg.from;
     if (!pendingAppointments[chatId]) {
-        msg.sendMessage("⚠️ No tienes una cita pendiente. Escribe *3* para iniciar.");
+        msg.reply("⚠️ No tienes una cita pendiente. Escribe *3* para iniciar.");
         return;
     }
 
@@ -67,13 +67,13 @@ async function handleNextSlot(msg) {
     
     if (availableSlot) {
         pendingAppointments[chatId] = availableSlot;
-        msg.sendMessage(
+        msg.reply(
             `Siguiente horario disponible: ${availableSlot.toLocaleString()}\n` +
             "¿Te gustaría agendar este horario?\n" +
             "Responde *s* para confirmar o *n* para ver el siguiente horario disponible."
         );
     } else {
-        msg.sendMessage("❌ No hay más horarios disponibles.");
+        msg.reply("❌ No hay más horarios disponibles.");
     }
 }
 
@@ -82,7 +82,7 @@ async function confirmAppointment(msg) {
     const folio = globalFolio[chatId];
 
     if (!pendingAppointments[chatId]) {
-        msg.sendMessage("⚠️ No tienes una cita pendiente. Escribe *3* para iniciar.");
+        msg.reply("⚠️ No tienes una cita pendiente. Escribe *3* para iniciar.");
         return;
     }
 
@@ -90,11 +90,11 @@ async function confirmAppointment(msg) {
         const data = await checkStatus(folio);
         const confirmedSlot = pendingAppointments[chatId];
         await createCalendarEvent(msg, folio, confirmedSlot, data);
-        msg.sendMessage(`✅ Tu pregira ha sido agendada el ${confirmedSlot.toLocaleString()} \n dirección: https://maps.app.goo.gl/EJsdeEDLNEpw2jfx9`);
+        msg.reply(`✅ Tu pregira ha sido agendada el ${confirmedSlot.toLocaleString()} \n dirección: https://maps.app.goo.gl/EJsdeEDLNEpw2jfx9`);
         delete pendingAppointments[chatId];
     } catch (error) {
         console.error("Error al confirmar la cita:", error);
-        msg.sendMessage("❌ Ocurrió un error al agendar tu recorrido. Intenta de nuevo.");
+        msg.reply("❌ Ocurrió un error al agendar tu recorrido. Intenta de nuevo.");
     }
 }
 
