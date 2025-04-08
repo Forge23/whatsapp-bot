@@ -349,14 +349,22 @@ async function handleFormResponse(msg, text) {
         case 5:
             state.data.aforo = text;
             state.step++;
-            msg.reply("Por favor, proporciona la fecha deseada para el evento (DD-MM-YYYY):");
+            msg.reply("Por favor, proporciona la fecha deseada para el evento (DD-MM-YYYY o DD-MM-YY):");
             break;
         case 6:
-            const dateRegex = /^\d{2}-\d{2}-\d{4}$/;
-            if (!dateRegex.test(text)) {
-                msg.reply("❌ Formato de fecha no válido. Por favor, proporciona una fecha válida (DD-MM-YYYY):");
+            const dateRegexFull = /^\d{2}-\d{2}-\d{4}$/; // Formato DD-MM-YYYY
+            const dateRegexShort = /^\d{2}-\d{2}-\d{2}$/; // Formato DD-MM-YY
+            if (!dateRegexFull.test(text) && !dateRegexShort.test(text)) {
+                msg.reply("❌ Formato de fecha no válido. Por favor, proporciona una fecha válida (DD-MM-YYYY o DD-MM-YY):");
                 return;
             }
+            
+            if (dateRegexShort.test(text)) {
+                const parts = text.split('-');
+                const year = parseInt(parts[2], 10) + 2000; // Convertir YY a YYYY
+                text = `${parts[0]}-${parts[1]}-${year}`;
+            }
+
             state.data.eventDate = text;
             state.data.folio = generateFolio(); // Generate folio
             await submitForm(state.data);
