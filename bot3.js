@@ -9,6 +9,15 @@ const client = new Client({
     authStrategy: new LocalAuth(),
 });
 
+client.on("qr", (qr) => {
+    qrcode.generate(qr, { small: true });
+    console.log('QR Code generado. Por favor escanea con WhatsApp.');
+});
+
+client.on("ready", () => {
+    console.log("Client is ready!");
+});
+
 const auth = new google.auth.GoogleAuth({
     keyFile: "credentials.json",
     scopes: ["https://www.googleapis.com/auth/calendar"],
@@ -118,6 +127,17 @@ client.on("message", async (msg) => {
         const text = msg.body.toLowerCase().trim();
         const chatId = msg.from;
 
+        if (msg.hasQuotedMsg) {
+            try {
+                const quotedMsg = await msg.getQuotedMessage();
+                // Procesar el mensaje citado si es necesario
+            } catch (error) {
+                console.error('Error al obtener el mensaje citado:', error);
+                // Ignorar el error y continuar esperando nuevos mensajes
+                return;
+            }
+        }
+
         if (formState[chatId]) {
             handleFormResponse(msg, text);
             return;
@@ -198,7 +218,7 @@ client.on("message", async (msg) => {
 
             if (foundSlot) {
                 pendingAppointments[msg.from] = foundSlot;
-                msg.reply(`📆 La siguiente disponibilidad es el ${foundSlot.toLocaleString()}.\nResponde con:\n\n✅ *S*\n❌ *n* para probar otra opción`);
+                msg.reply(`📆 La siguiente disponibilidad es el ${foundSlot.toLocaleString()}.\nResponde con:\n\n *S*\n *n* para probar otra opción`);
             } else {
                 // Si no hay más horarios disponibles en el día, buscar en el siguiente día hábil
                 nextSlot.setDate(nextSlot.getDate() + 1);
@@ -237,7 +257,7 @@ client.on("message", async (msg) => {
 
                 if (nextDayFoundSlot) {
                     pendingAppointments[msg.from] = nextDayFoundSlot;
-                    msg.reply(`📆 La siguiente disponibilidad es el ${nextDayFoundSlot.toLocaleString()}.\nResponde con:\n\n✅ *S*\n❌ *n* para probar otra opción`);
+                    msg.reply(`📆 La siguiente disponibilidad es el ${nextDayFoundSlot.toLocaleString()}.\nResponde con:\n\n *S*\n *n* para probar otra opción`);
                 } else {
                     msg.reply("❌ No hay más horarios disponibles en los próximos días. Intenta de nuevo mañana.");
                 }
