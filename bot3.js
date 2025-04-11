@@ -127,15 +127,14 @@ client.on("message", async (msg) => {
         const text = msg.body.toLowerCase().trim();
         const chatId = msg.from;
 
-        if (msg.hasQuotedMsg) {
-            try {
+        try {
+            if (msg.hasQuotedMsg) {
                 const quotedMsg = await msg.getQuotedMessage();
                 // Procesar el mensaje citado si es necesario
-            } catch (error) {
-                console.error('Error al obtener el mensaje citado:', error);
-                // Ignorar el error y continuar esperando nuevos mensajes
-                return;
             }
+        } catch (error) {
+            console.error('Error al obtener el mensaje citado:', error);
+            // Ignorar el error y continuar sin interrumpir el flujo
         }
 
         if (formState[chatId]) {
