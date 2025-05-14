@@ -53,7 +53,7 @@ async function handleFormResponse(msg, text) {
             
             try {
                 await submitForm(currentState.data);
-                msg.reply(`✅ Formulario enviado correctamente.\nTu folio es: *${folio}*\nGuárdalo para agendar tu pregira más tarde.`);
+                msg.reply(`✅ Formulario enviado correctamente.\nTu folio es: *${folio}*\nPresiona 3 para agendar una cita en bloque.`);
             } catch (error) {
                 msg.reply("❌ Hubo un error al enviar el formulario. Por favor, intenta de nuevo.");
             }

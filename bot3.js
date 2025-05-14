@@ -62,9 +62,9 @@ client.on("message", async (msg) => {
         else if(text === "hola"){
             console.log(text);
             const response = `Hola, bienvenido al chat de información de bloque, se parte de nuestra comunidad al registrarte en (https://bloqueqro.mx/crear-cuenta/) .\n\n
-            1️⃣ *[Quiero hacer un evento en BLOQUE]*\n
+            1️⃣ *[Quiero hacer un evento en BLOQUE][Generar folio]*\n
             2️⃣ *[Conoce bloque](https://bloqueqro.mx)*\n
-            3️⃣ *[Agenda una pregira por BLOQUE]*\n
+            3️⃣ *[Agenda una pregira por BLOQUE](folio requerido presione 1)*\n
             4️⃣ *[Conoce el reglamento de eventos](https://drive.google.com/file/d/1UIsCc4zyDtkBia7Fun1IbdVRNcRDEa0u/view?usp=sharing)*\n
             5️⃣ *[Conocer los espacios que tenemos para ti](https://bloqueqro.mx/espacios/)*\n
             6️⃣ *[Ver todos los cursos disponibles](https://bloqueqro.mx/cursos)* \n
