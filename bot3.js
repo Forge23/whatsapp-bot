@@ -275,7 +275,7 @@ client.on("message", async (msg) => {
 
             setTimeout(() => {
                 msg.reply(response);
-            }, 3000);
+            }, 1000);
 
         }
         else if (text === "2") {
@@ -297,7 +297,7 @@ client.on("message", async (msg) => {
             const defaultResponse = `🤖 No entiendo ese mensaje. Escribe *HOLA* para empezar o selecciona una opción válida.`;
             setTimeout(() => {
                 msg.reply(defaultResponse);
-            }, 3000);
+            }, 1000);
         }
     }
 });
@@ -363,27 +363,15 @@ async function handleFormResponse(msg, text) {
         case 4:
             state.data.phone = text;
             state.step++;
-            msg.reply("Por favor, proporciona el aforo del evento solo el número:");
+            msg.reply("Por favor, proporciona el aforo del evento:");
             break;
         case 5:
             state.data.aforo = text;
             state.step++;
-            msg.reply("Por favor, proporciona la fecha deseada para el evento (DD-MM-YYYY o DD-MM-YY):");
+            msg.reply("Por favor, proporciona la fecha deseada para el evento:");
             break;
         case 6:
-            const dateRegexFull = /^\d{2}-\d{2}-\d{4}$/; // Formato DD-MM-YYYY
-            const dateRegexShort = /^\d{2}-\d{2}-\d{2}$/; // Formato DD-MM-YY
-            if (!dateRegexFull.test(text) && !dateRegexShort.test(text)) {
-                msg.reply("❌ Formato de fecha no válido. Por favor, proporciona una fecha válida (DD-MM-YYYY o DD-MM-YY):");
-                return;
-            }
-            
-            if (dateRegexShort.test(text)) {
-                const parts = text.split('-');
-                const year = parseInt(parts[2], 10) + 2000; // Convertir YY a YYYY
-                text = `${parts[0]}-${parts[1]}-${year}`;
-            }
-
+            // Eliminar validación regex, aceptar cualquier formato de fecha
             state.data.eventDate = text;
             state.data.folio = generateFolio(); // Generate folio
             await submitForm(state.data);
@@ -415,7 +403,7 @@ async function submitForm(data) {
     };
 
     try {
-        const response = await axios.post('http://localhost:8089/ficha', payload);
+        const response = await axios.post('http://localhost:8089/ficha/crear', payload);
         console.log('Form submitted successfully:', response.data);
     } catch (error) {
         console.error('Error submitting form:', error);
