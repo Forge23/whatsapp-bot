@@ -33,9 +33,23 @@ async function handleFormResponse(msg, text) {
             break;
 
         case 4:
-            currentState.data.telefono = text;
+            currentState.data.telefono = text;    
+            currentState.step = 5;
+            msg.reply("Por favor, proporciona el número de aforo para tu evento:");
+            break;
+
+        case 5:
+            currentState.data.aforo = text;
+            currentState.step = 6;
+            msg.reply("por favor, proporciono la fecha deseada para su evento:"); 
+            break;   
+
+        case 6:
+            currentState.data.fecha = text;
             const folio = generateFolio();
             currentState.data.folio = folio;
+            currentState.data.estatus = 1;
+            currentState.data.token = 0;
             
             try {
                 await submitForm(currentState.data);

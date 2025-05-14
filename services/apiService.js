@@ -6,7 +6,7 @@ async function checkStatus(folio) {
         return response.data;
     } catch (error) {
         console.error("Error checking status:", error);
-        throw error;
+        return null;
     }
 }
 
@@ -16,7 +16,7 @@ async function submitForm(data) {
         return response.data;
     } catch (error) {
         console.error("Error submitting form:", error);
-        throw error;
+        return null;
     }
 }
 
@@ -26,7 +26,7 @@ async function updateToken(folio) {
         return true;
     } catch (error) {
         console.error("Error updating token:", error);
-        throw error;
+        return false;
     }
 }
 
