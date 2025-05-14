@@ -58,7 +58,8 @@ async function handleNextSlot(msg) {
         nextSlot.setHours(9, 0, 0, 0);
     }
 
-    while (nextSlot.getDay() < 1 || nextSlot.getDay() > 3) {
+    // Cambiar para permitir de lunes (1) a viernes (5)
+    while (nextSlot.getDay() === 0 || nextSlot.getDay() === 6) {
         nextSlot.setDate(nextSlot.getDate() + 1);
         nextSlot.setHours(9, 0, 0, 0);
     }
