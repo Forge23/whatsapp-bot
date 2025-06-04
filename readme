@@ -1,1 +1,8 @@
 el bot no es ofical, queda ver conmo hacerlo ofical o migrarlo a un lugar oficial
+
+Las funciones de las llamadas de las apis es a partir de la linea 305 en main.
+la version actual de bloque es esta, pero se puede cambiar a la version 1.0.1 para tener la estructura de carpetas
+Se requiere el archivo "credenmtials.json" para hacer que funcione la api de google calendar y arranque el bot.
+La intrucción de arranque es "node bot3,js"
+Si hay problemas al iniciar el bot borrar la carpeta auth que se genera y volver a iniciar y vincular.
+el celular no debe estar conectado a otras sesiones de whatsapp web para evitar conflictos.
