@@ -1,5 +1,6 @@
 el bot no es ofical, queda ver conmo hacerlo ofical o migrarlo a un lugar oficial
 
+al descargar el bot en un nuevo entorno recordar primero hace "npm install".
 Las funciones de las llamadas de las apis es a partir de la linea 305 en main.
 la version actual de bloque es esta, pero se puede cambiar a la version 1.0.1 para tener la estructura de carpetas
 Se requiere el archivo "credenmtials.json" para hacer que funcione la api de google calendar y arranque el bot.
